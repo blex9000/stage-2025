@@ -430,7 +430,7 @@ public class Reading {
     
     // Getters e setters
 }</code></pre>
-                <p>Una lettura (Storico) rappresenta il valore di un singolo segnale per un dispositivo specifico in un determinato momento. Ogni istanza di Storico contiene:</p>
+                <p>Una lettura rappresenta il valore di un singolo segnale per un dispositivo specifico in un determinato momento.</p>
                 <ul>
                     <li><strong>deviceId</strong>: L'identificativo del dispositivo da cui proviene la lettura</li>
                     <li><strong>signalId</strong>: L'identificativo del segnale specifico letto</li>
@@ -752,10 +752,10 @@ public class OpcUaDriver implements Driver {
                         Object value = readValueFromOpcUa(nodePath);
                         
                         // Creare una nuova lettura
-                        Reading reading = new Reading();
-                        reading.setDeviceId(device.getId());
+            Reading reading = new Reading();
+            reading.setDeviceId(device.getId());
                         reading.setSignalId(signal.getId());
-                        reading.setTimestamp(new Date());
+            reading.setTimestamp(new Date());
                         reading.setValue(value);
                         
                         readingsList.add(reading);
@@ -796,8 +796,8 @@ public class OpcUaDriver implements Driver {
         return null; // Da implementare
     }
 }</code></pre>
-            </div>
-            
+        </div>
+
             <div class="highlight">
                 <p>Factory per i driver:</p>
                 <pre><code>@Service
@@ -921,7 +921,7 @@ public class SchedulingConfig {
                 <li><strong>Polling</strong>: Esegue letture periodiche dai dispositivi raggruppati per sorgente dati</li>
                 <li><strong>Elaborazione</strong>: Salva le letture e aggiorna gli stati dei dispositivi</li>
                 <li><strong>Monitoraggio</strong>: Verifica le condizioni di allarme</li>
-            </ul>
+                </ul>
             
             <p>Il ciclo di vita dell'Engine è gestito da Spring attraverso le annotazioni @PostConstruct e @PreDestroy:</p>
             <ul>
@@ -1007,7 +1007,7 @@ public class DashboardController {
 
         <div id="conclusioni" class="section">
             <h2>12. Conclusioni</h2>
-
+            
             <p>Al temrine del progetto si raggiungera una buona padronanza di:</p>
             <ul>
                 <li>I principi fondamentali di Spring Boot</li>
@@ -1017,7 +1017,7 @@ public class DashboardController {
                 <li>Implementazione di job schedulati</li>
                 <li>Sviluppo di sistemi modulari e estensibili</li>
                 <li>Creazione di dashboard per la visualizzazione dei dati</li>
-            </ul>            
+            </ul>
         </div>
 
         <div id="diagrammi" class="section">
@@ -1031,8 +1031,8 @@ public class DashboardController {
                     Device }|--|| Datasource : "utilizza"
                     Device ||--o{ DeviceState : "ha"
                     DeviceType ||--o{ Signal : "definisce"
-                    Device ||--o{ Storico : "produce"
-                    Datasource ||--o{ Storico : "fornisce"
+                    Device ||--o{ Hystoric : "produce"
+                    Datasource ||--o{ Hystoric : "fornisce"
                     
                     DeviceType {
                         string id PK
@@ -1067,15 +1067,15 @@ public class DashboardController {
                         object signalStates
                     }
                     
-                    Storico {
+                    Hystoric {
                         string id PK
                         string deviceId FK
                         string signalId
                         date timestamp
                         object value
                     }
-                </div>
-            </div>
+        </div>
+    </div>
             
             <h3>Diagramma delle Classi</h3>
             <div class="diagram">
