@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinelec -  Stage - 2025</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --code-bg: #f1f1f1;
+            --section-bg: white;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            margin-top: 30px;
+        }
+
+        code {
+            background-color: var(--code-bg);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            line-height: 1.4;
+            margin: 20px 0;
+        }
+
+        .section {
+            background: var(--section-bg);
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .highlight {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .diagram {
+            margin: 25px auto;
+            text-align: center;
+        }
+
+        .note {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table, th, td {
+            border: 1px solid var(--border-color);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .toc {
+            background-color: var(--section-bg);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .toc ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        
+        .toc li {
+            margin-bottom: 8px;
+        }
+        
+        .toc a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sinelec -  Stage - 2025</h1>
+            <p>Java, Spring Boot e MongoDB</p>
+        </header>
+
+        <div class="toc section">
+            <h2>Indice</h2>
+            <ul>
+                <li><a href="#introduzione">1. Introduzione</a></li>
+                <li><a href="#tecnologie">2. Tecnologie utilizzate</a></li>
+                <li><a href="#concetti-spring">3. Concetti fondamentali di Spring Boot</a></li>
+                <li><a href="#modelli">4. Modello dati</a></li>
+                <li><a href="#repository">5. Repository</a></li>
+                <li><a href="#service">6. Servizi</a></li>
+                <li><a href="#controller">7. Controller REST</a></li>
+                <li><a href="#driver">8. Pattern di design e gestione dei driver</a></li>
+                <li><a href="#engine">9. Engine e Scheduling</a></li>
+                <li><a href="#frontend">10. Dashboard e frontend</a></li>
+                <li><a href="#esercizi">11. Esercizi pratici</a></li>
+                <li><a href="#conclusioni">12. Conclusioni</a></li>
+            </ul>
+        </div>
+
+        <div id="introduzione" class="section">
+            <h2>1. Introduzione</h2>
+            <p>Benvenuti in questa guida per lo sviluppo di un'applicazione di telemetria utilizzando Java, Spring Boot e MongoDB. Questo corso è strutturato per guidarvi attraverso lo sviluppo di un'applicazione completa per l'acquisizione di telemetrie da dispositivi su varie sorgenti, il salvataggio dei dati e la visualizzazione tramite dashboard.</p>
+            <p>Al termine di questo percorso, avrete realizzato un'applicazione che può:</p>
+            <ul>
+                <li>Acquisire telemetrie da diversi dispositivi tramite componenti driver</li>
+                <li>Salvare i valori letti in uno storico e mantenere l'ultimo stato</li>
+                <li>Visualizzare le telemetrie tramite una dashboard</li>
+                <li>Configurare i dispositivi per le letture</li>
+                <li>Gestire gli stati di allarme basati su condizioni configurabili</li>
+            </ul>
+            <div class="note">
+                <p><strong>Nota:</strong> Questa guida è pensata per sviluppatori con conoscenze base di Java che desiderano approfondire Spring Boot e MongoDB.</p>
+            </div>
+        </div>
+
+        <div id="tecnologie" class="section">
+            <h2>2. Tecnologie utilizzate</h2>
+            <h3>Java</h3>
+            <p>Java è il linguaggio di programmazione principale utilizzato in questo progetto. Utilizzeremo Java 17 o versioni successive per sfruttare le moderne caratteristiche del linguaggio.</p>
+            
+            <h3>Spring Boot</h3>
+            <p>Spring Boot è un framework che semplifica lo sviluppo di applicazioni basate su Spring. Offre configurazioni predefinite e strumenti che rendono più rapido lo sviluppo di applicazioni robuste.</p>
+            <p>Utilizzeremo:</p>
+            <ul>
+                <li>Spring Data MongoDB</li>
+                <li>Spring Web per i servizi REST</li>
+                <li>Spring Scheduling per le operazioni periodiche</li>
+            </ul>
+            
+            <h3>MongoDB</h3>
+            <p>MongoDB è un database NoSQL orientato ai documenti che permette grande flessibilità nella gestione dei dati. È particolarmente adatto per l'archiviazione di telemetrie e dati di configurazione.</p>
+        </div>
+
+        <div id="concetti-spring" class="section">
+            <h2>3. Concetti fondamentali di Spring Boot</h2>
+            
+            <h3>Inversion of Control (IoC) e Dependency Injection</h3>
+            <p>L'IoC è un principio di design in cui il controllo del flusso del programma è invertito rispetto alla programmazione tradizionale. In Spring, questo si realizza attraverso la Dependency Injection (DI), dove gli oggetti ricevono le loro dipendenze anziché crearle.</p>
+            <div class="highlight">
+                <p>Esempio di Dependency Injection:</p>
+                <pre><code>@Service
+public class DeviceService {
+    private final DeviceRepository deviceRepository;
+    
+    // Constructor Injection
+    public DeviceService(DeviceRepository deviceRepository) {
+        this.deviceRepository = deviceRepository;
+    }
+}</code></pre>
+            </div>
+            
+            <h3>Bean e loro annotazioni</h3>
+            <p>I Bean sono oggetti gestiti dal container IoC di Spring. Li definiamo utilizzando diverse annotazioni:</p>
+            <table>
+                <tr>
+                    <th>Annotazione</th>
+                    <th>Descrizione</th>
+                </tr>
+                <tr>
+                    <td>@Component</td>
+                    <td>Indica un componente generico di Spring</td>
+                </tr>
+                <tr>
+                    <td>@Service</td>
+                    <td>Indica un servizio che contiene la logica di business</td>
+                </tr>
+                <tr>
+                    <td>@Repository</td>
+                    <td>Indica un componente che interagisce con il database</td>
+                </tr>
+                <tr>
+                    <td>@Controller / @RestController</td>
+                    <td>Indica un componente che gestisce le richieste HTTP</td>
+                </tr>
+                <tr>
+                    <td>@Configuration</td>
+                    <td>Indica una classe che definisce Bean</td>
+                </tr>
+            </table>
+            
+            <h3>REST API</h3>
+            <p>REST (Representational State Transfer) è uno stile architetturale per la creazione di servizi web. In Spring, creiamo API REST utilizzando l'annotazione @RestController e definendo endpoint con @RequestMapping, @GetMapping, @PostMapping, ecc.</p>
+            <div class="highlight">
+                <p>Esempio di controller REST:</p>
+                <pre><code>@RestController
+@RequestMapping("/api/devices")
+public class DeviceController {
+    private final DeviceService deviceService;
+    
+    public DeviceController(DeviceService deviceService) {
+        this.deviceService = deviceService;
+    }
+    
+    @GetMapping
+    public List<Device> getAllDevices() {
+        return deviceService.findAll();
+    }
+    
+    @GetMapping("/{id}")
+    public Device getDeviceById(@PathVariable String id) {
+        return deviceService.findById(id);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <div id="modelli" class="section">
+            <h2>4. Modello dati</h2>
+            <p>Definiamo i modelli per la nostra applicazione di telemetria basati sui requisiti.</p>
+            
+            <h3>Device (Dispositivo)</h3>
+            <div class="highlight">
+                <pre><code>@Document(collection = "devices")
+public class Device {
+    @Id
+    private String id;
+    private String name;
+    private String description;
+    private String location;
+    private boolean active;
+    private String deviceTypeId;
+    private String datasourceId;
+    
+    // Configurazione specifica del dispositivo
+    private Map<String, Object> configuration;
+    
+    // Getters e setters
+}</code></pre>
+            </div>
+            
+            <h3>DeviceType (Tipo di Dispositivo)</h3>
+            <div class="highlight">
+                <pre><code>@Document(collection = "deviceTypes")
+public class DeviceType {
+    @Id
+    private String id;
+    private String name;
+    private String description;
+    
+    // Definizione dei segnali che questo tipo di dispositivo può gestire
+    private List<Signal> signals;
+    
+    // Getters e setters
+}
+
+public class Signal {
+    private String id;
+    private String name;
+    private String description;
+    private SignalType type; // NUMERIC, STRING, BOOLEAN, etc.
+    private Map<String, Object> configuration; // Configurazione specifica del segnale
+    
+    // Allarmi
+    private boolean alarmEnabled;
+    private AlarmCondition alarmCondition;
+    
+    // Getters e setters
+}
+
+public enum SignalType {
+    NUMERIC, STRING, BOOLEAN, DATE, OBJECT
+}
+
+public class AlarmCondition {
+    private AlarmOperator operator; // GT, LT, EQ, NEQ, etc.
+    private Object threshold;
+    private String message;
+    
+    // Getters e setters
+}
+
+public enum AlarmOperator {
+    GT, LT, GTE, LTE, EQ, NEQ, CONTAINS, STARTS_WITH, ENDS_WITH
+}</code></pre>
+            </div>
+            
+            <h3>DeviceState (Stato del Dispositivo)</h3>
+            <div class="highlight">
+                <pre><code>@Document(collection = "deviceStates")
+public class DeviceState {
+    @Id
+    private String id;
+    private String deviceId;
+    private Date timestamp;
+    
+    // Valori attuali dei segnali
+    private Map<String, SignalState> signalStates;
+    
+    // Getters e setters
+}
+
+public class SignalState {
+    private String signalId;
+    private Object value;
+    private Date timestamp;
+    private boolean inAlarm;
+    private String alarmMessage;
+    
+    // Getters e setters
+}</code></pre>
+            </div>
+            
+            <h3>Reading (Lettura)</h3>
+            <div class="highlight">
+                <pre><code>@Document(collection = "readings")
+public class Reading {
+    @Id
+    private String id;
+    private String deviceId;
+    private Date timestamp;
+    
+    // Valori letti dei segnali
+    private Map<String, Object> values;
+    
+    // Getters e setters
+}</code></pre>
+            </div>
+            
+            <h3>Datasource (Sorgente Dati)</h3>
+            <div class="highlight">
+                <pre><code>@Document(collection = "datasources")
+public class Datasource {
+    @Id
+    private String id;
+    private String name;
+    private String description;
+    private String driverId; // Identifica il tipo di driver da utilizzare
+    private boolean active;
+    
+    // Configurazione della sorgente dati
+    private Map<String, Object> configuration;
+    
+    // Getters e setters
+}</code></pre>
+            </div>
+            
+            <div class="note">
+                <p><strong>Nota sulle annotazioni MongoDB:</strong></p>
+                <ul>
+                    <li><code>@Document</code>: Indica che la classe rappresenta un documento MongoDB</li>
+                    <li><code>@Id</code>: Identifica il campo ID del documento</li>
+                    <li><code>@Field</code>: Può essere usato per specificare il nome del campo nel documento</li>
+                    <li><code>@Indexed</code>: Crea un indice sul campo per ottimizzare le query</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="repository" class="section">
+            <h2>5. Repository</h2>
+            <p>I repository di Spring Data ci permettono di interagire con il database MongoDB in modo semplice e dichiarativo.</p>
+            
+            <h3>DeviceRepository</h3>
+            <div class="highlight">
+                <pre><code>@Repository
+public interface DeviceRepository extends MongoRepository<Device, String> {
+    List<Device> findByActive(boolean active);
+    List<Device> findByDeviceTypeId(String deviceTypeId);
+    List<Device> findByDatasourceId(String datasourceId);
+    Optional<Device> findByName(String name);
+}</code></pre>
+            </div>
+            
+            <h3>DeviceTypeRepository</h3>
+            <div class="highlight">
+                <pre><code>@Repository
+public interface DeviceTypeRepository extends MongoRepository<DeviceType, String> {
+    Optional<DeviceType> findByName(String name);
+}</code></pre>
+            </div>
+            
+            <h3>DeviceStateRepository</h3>
+            <div class="highlight">
+                <pre><code>@Repository
+public interface DeviceStateRepository extends MongoRepository<DeviceState, String> {
+    Optional<DeviceState> findTopByDeviceIdOrderByTimestampDesc(String deviceId);
+    List<DeviceState> findByDeviceIdAndTimestampBetween(String deviceId, Date start, Date end);
+}</code></pre>
+            </div>
+            
+            <h3>ReadingRepository</h3>
+            <div class="highlight">
+                <pre><code>@Repository
+public interface ReadingRepository extends MongoRepository<Reading, String> {
+    List<Reading> findByDeviceId(String deviceId);
+    List<Reading> findByDeviceIdAndTimestampBetween(String deviceId, Date start, Date end);
+    
+    @Query("{'deviceId': ?0, 'values.?1': {$exists: true}}")
+    List<Reading> findByDeviceIdAndSignalId(String deviceId, String signalId);
+}</code></pre>
+            </div>
+            
+            <h3>DatasourceRepository</h3>
+            <div class="highlight">
+                <pre><code>@Repository
+public interface DatasourceRepository extends MongoRepository<Datasource, String> {
+    List<Datasource> findByActive(boolean active);
+    List<Datasource> findByDriverId(String driverId);
+}</code></pre>
+            </div>
+            
+            <div class="note">
+                <p><strong>Nota su Spring Data:</strong> Spring Data offre metodi automatici per le operazioni CRUD e supporta la creazione di metodi di query con nomi descrittivi. Per query più complesse, possiamo utilizzare l'annotazione @Query.</p>
+            </div>
+        </div>
+
+        <div id="service" class="section">
+            <h2>6. Servizi</h2>
+            <p>I servizi contengono la logica di business e fungono da intermediari tra i controller e i repository. Seguendo il principio di separazione dei livelli:</p>
+            
+            <div class="diagram">
+                <p style="background-color: #ddd; padding: 10px; text-align: center;">
+                    CONTROLLER → SERVICE → REPOSITORY
+                </p>
+            </div>
+            
+            <h3>DeviceService</h3>
+            <div class="highlight">
+                <pre><code>@Service
+public class DeviceService {
+    private final DeviceRepository deviceRepository;
+    private final DeviceTypeRepository deviceTypeRepository;
+    
+    public DeviceService(DeviceRepository deviceRepository, DeviceTypeRepository deviceTypeRepository) {
+        this.deviceRepository = deviceRepository;
+        this.deviceTypeRepository = deviceTypeRepository;
+    }
+    
+    public List<Device> findAll() {
+        return deviceRepository.findAll();
+    }
+    
+    public Device findById(String id) {
+        return deviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found with id: " + id));
+    }
+    
+    public Device save(Device device) {
+        // Validare che il deviceType esista
+        deviceTypeRepository.findById(device.getDeviceTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("DeviceType not found with id: " + device.getDeviceTypeId()));
+        
+        return deviceRepository.save(device);
+    }
+    
+    public void deleteById(String id) {
+        deviceRepository.deleteById(id);
+    }
+    
+    // Altri metodi di business logic
+}</code></pre>
+            </div>
+            
+            <p>Implementeremo servizi simili per DeviceType, DeviceState, Reading e Datasource. Ogni servizio conterrà:</p>
+            <ul>
+                <li>Metodi CRUD base</li>
+                <li>Logica di business specifica</li>
+                <li>Validazioni e controlli</li>
+            </ul>
+            
+            <div class="note">
+                <p><strong>Nota sull'eccezione personalizzata:</strong> È buona pratica creare eccezioni personalizzate come ResourceNotFoundException per gestire in modo uniforme gli errori.</p>
+                <pre><code>public class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <div id="controller" class="section">
+            <h2>7. Controller REST</h2>
+            <p>I controller REST definiscono gli endpoint dell'API che espongono i servizi dell'applicazione.</p>
+            
+            <h3>DeviceController</h3>
+            <div class="highlight">
+                <pre><code>@RestController
+@RequestMapping("/api/devices")
+public class DeviceController {
+    private final DeviceService deviceService;
+    
+    public DeviceController(DeviceService deviceService) {
+        this.deviceService = deviceService;
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<Device>> getAllDevices() {
+        return ResponseEntity.ok(deviceService.findAll());
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<Device> getDeviceById(@PathVariable String id) {
+        return ResponseEntity.ok(deviceService.findById(id));
+    }
+    
+    @PostMapping
+    public ResponseEntity<Device> createDevice(@RequestBody Device device) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(deviceService.save(device));
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<Device> updateDevice(@PathVariable String id, @RequestBody Device device) {
+        device.setId(id);
+        return ResponseEntity.ok(deviceService.save(device));
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDevice(@PathVariable String id) {
+        deviceService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+    
+    // Altri endpoint
+}</code></pre>
+            </div>
+            
+            <p>Ogni entità (DeviceType, DeviceState, Datasource) avrà il proprio controller con endpoint simili.</p>
+            
+            <div class="note">
+                <p><strong>Nota sulle annotazioni REST:</strong></p>
+                <ul>
+                    <li><code>@RestController</code>: Combina @Controller e @ResponseBody</li>
+                    <li><code>@RequestMapping</code>: Definisce il path base</li>
+                    <li><code>@GetMapping, @PostMapping, @PutMapping, @DeleteMapping</code>: Shorthand per i metodi HTTP</li>
+                    <li><code>@PathVariable</code>: Estrae variabili dal path</li>
+                    <li><code>@RequestBody</code>: Converte il corpo della richiesta in un oggetto</li>
+                    <li><code>@RequestParam</code>: Estrae parametri dalla query string</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="driver" class="section">
+            <h2>8. Pattern di design e gestione dei driver</h2>
+            <p>Implementeremo diversi pattern di design per rendere l'applicazione modulare e manutenibile.</p>
+            
+            <h3>Pattern Factory e Strategy</h3>
+            <p>Utilizzeremo il pattern Factory per creare driver diversi in base al tipo di sorgente dati.</p>
+            
+            <div class="highlight">
+                <p>Interfaccia Driver:</p>
+                <pre><code>public interface Driver {
+    void initialize(Datasource datasource);
+    void connect() throws DriverException;
+    void disconnect();
+    Reading read(Device device) throws DriverException;
+    boolean isConnected();
+}</code></pre>
+            </div>
+            
+            <div class="highlight">
+                <p>Implementazione di driver specifici:</p>
+                <pre><code>@Component
+public class OpcUaDriver implements Driver {
+    private Datasource datasource;
+    private boolean connected;
+    // Altre proprietà specifiche per OPC UA
+    
+    @Override
+    public void initialize(Datasource datasource) {
+        this.datasource = datasource;
+        // Inizializzazione specifica per OPC UA
+    }
+    
+    @Override
+    public void connect() throws DriverException {
+        try {
+            // Logica per la connessione OPC UA
+            this.connected = true;
+        } catch (Exception e) {
+            throw new DriverException("Failed to connect to OPC UA server", e);
+        }
+    }
+    
+    @Override
+    public void disconnect() {
+        // Logica per la disconnessione
+        this.connected = false;
+    }
+    
+    @Override
+    public Reading read(Device device) throws DriverException {
+        if (!connected) {
+            throw new DriverException("Driver not connected");
+        }
+        
+        try {
+            // Logica per leggere i valori dal server OPC UA
+            Reading reading = new Reading();
+            reading.setDeviceId(device.getId());
+            reading.setTimestamp(new Date());
+            
+            Map<String, Object> values = new HashMap<>();
+            // Popolamento dei valori letti
+            
+            reading.setValues(values);
+            return reading;
+        } catch (Exception e) {
+            throw new DriverException("Failed to read from OPC UA server", e);
+        }
+    }
+    
+    @Override
+    public boolean isConnected() {
+        return connected;
+    }
+}</code></pre>
+            </div>
+            
+            <div class="highlight">
+                <p>Factory per i driver:</p>
+                <pre><code>@Service
+public class DriverFactory {
+    private final Map<String, Driver> drivers;
+    
+    public DriverFactory(List<Driver> availableDrivers) {
+        // Mappiamo i driver disponibili per tipo
+        this.drivers = new HashMap<>();
+        
+        // Registriamo i driver (nell'applicazione reale, questo potrebbe essere fatto con reflection)
+        drivers.put("opcua", new OpcUaDriver());
+        drivers.put("modbus", new ModbusDriver());
+        drivers.put("mqtt", new MqttDriver());
+        // Altri driver...
+    }
+    
+    public Driver createDriver(String driverId) {
+        Driver driver = drivers.get(driverId.toLowerCase());
+        if (driver == null) {
+            throw new IllegalArgumentException("Unsupported driver type: " + driverId);
+        }
+        return driver;
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <div id="engine" class="section">
+            <h2>9. Engine e Scheduling</h2>
+            <p>Implementeremo un engine che si occupa di gestire i driver e di leggere periodicamente i dati dalle sorgenti.</p>
+            
+            <h3>TelemetryEngine</h3>
+            <div class="highlight">
+                <pre><code>@Service
+public class TelemetryEngine {
+    private static final Logger logger = LoggerFactory.getLogger(TelemetryEngine.class);
+    
+    private final DatasourceRepository datasourceRepository;
+    private final DeviceRepository deviceRepository;
+    private final DeviceStateRepository deviceStateRepository;
+    private final ReadingRepository readingRepository;
+    private final DriverFactory driverFactory;
+    
+    private final Map<String, Driver> activeDrivers = new ConcurrentHashMap<>();
+    
+    public TelemetryEngine(
+            DatasourceRepository datasourceRepository,
+            DeviceRepository deviceRepository,
+            DeviceStateRepository deviceStateRepository,
+            ReadingRepository readingRepository,
+            DriverFactory driverFactory) {
+        this.datasourceRepository = datasourceRepository;
+        this.deviceRepository = deviceRepository;
+        this.deviceStateRepository = deviceStateRepository;
+        this.readingRepository = readingRepository;
+        this.driverFactory = driverFactory;
+    }
+    
+    @PostConstruct
+    public void initialize() {
+        // Carica tutte le sorgenti dati attive
+        List<Datasource> activeDatasources = datasourceRepository.findByActive(true);
+        
+        // Inizializza i driver per ogni sorgente dati
+        for (Datasource datasource : activeDatasources) {
+            try {
+                Driver driver = driverFactory.createDriver(datasource.getDriverId());
+                driver.initialize(datasource);
+                driver.connect();
+                activeDrivers.put(datasource.getId(), driver);
+                logger.info("Initialized driver for datasource: {}", datasource.getName());
+            } catch (Exception e) {
+                logger.error("Failed to initialize driver for datasource: {}", datasource.getName(), e);
+            }
+        }
+    }
+    
+    @PreDestroy
+    public void shutdown() {
+        // Disconnetti tutti i driver
+        for (Driver driver : activeDrivers.values()) {
+            try {
+                driver.disconnect();
+            } catch (Exception e) {
+                logger.error("Error disconnecting driver", e);
+            }
+        }
+        activeDrivers.clear();
+    }
+    
+    @Scheduled(fixedDelayString = "${telemetry.polling.interval:5000}")
+    public void pollDevices() {
+        logger.debug("Starting polling cycle");
+        
+        // Ottieni tutti i dispositivi attivi
+        List<Device> activeDevices = deviceRepository.findByActive(true);
+        
+        for (Device device : activeDevices) {
+            String datasourceId = device.getDatasourceId();
+            if (datasourceId == null || !activeDrivers.containsKey(datasourceId)) {
+                continue;
+            }
+            
+            Driver driver = activeDrivers.get(datasourceId);
+            
+            try {
+                Reading reading = driver.read(device);
+                readingRepository.save(reading);
+                
+                // Aggiorna lo stato del dispositivo
+                updateDeviceState(device, reading);
+                
+                logger.debug("Successfully polled device: {}", device.getName());
+            } catch (Exception e) {
+                logger.error("Error polling device: {}", device.getName(), e);
+            }
+        }
+    }
+    
+    private void updateDeviceState(Device device, Reading reading) {
+        // Recupera o crea un nuovo stato del dispositivo
+        DeviceState deviceState = deviceStateRepository.findTopByDeviceIdOrderByTimestampDesc(device.getId())
+                .orElseGet(() -> {
+                    DeviceState newState = new DeviceState();
+                    newState.setDeviceId(device.getId());
+                    newState.setSignalStates(new HashMap<>());
+                    return newState;
+                });
+        
+        // Aggiorna il timestamp
+        deviceState.setTimestamp(new Date());
+        
+        // Aggiorna i valori dei segnali
+        for (Map.Entry<String, Object> entry : reading.getValues().entrySet()) {
+            String signalId = entry.getKey();
+            Object value = entry.getValue();
+            
+            SignalState signalState = deviceState.getSignalStates().getOrDefault(signalId, new SignalState());
+            signalState.setSignalId(signalId);
+            signalState.setValue(value);
+            signalState.setTimestamp(reading.getTimestamp());
+            
+            // Controlla le condizioni di allarme
+            checkAlarmCondition(device, signalId, value, signalState);
+            
+            deviceState.getSignalStates().put(signalId, signalState);
+        }
+        
+        deviceStateRepository.save(deviceState);
+    }
+    
+    private void checkAlarmCondition(Device device, String signalId, Object value, SignalState signalState) {
+        // Implementazione della logica di controllo degli allarmi
+        // ...
+    }
+}</code></pre>
+            </div>
+            
+            <div class="note">
+                <p><strong>Nota sulle annotazioni di scheduling:</strong></p>
+                <ul>
+                    <li><code>@PostConstruct</code>: Eseguito dopo l'inizializzazione del bean</li>
+                    <li><code>@PreDestroy</code>: Eseguito prima della distruzione del bean</li>
+                    <li><code>@Scheduled</code>: Definisce un task schedulato</li>
+                </ul>
+                <p>Per abilitare lo scheduling in Spring Boot, bisogna aggiungere <code>@EnableScheduling</code> a una classe di configurazione.</p>
+            </div>
+        </div>
+
+        <div id="frontend" class="section">
+            <h2>10. Dashboard e frontend</h2>
+            <p>Per la dashboard di visualizzazione delle telemetrie, possiamo implementare un frontend utilizzando tecnologie come:</p>
+            <ul>
+                <li>Thymeleaf (integrato con Spring Boot)</li>
+                <li>Angular, React o Vue.js (per applicazioni più complesse)</li>
+            </ul>
+            
+            <p>La dashboard dovrebbe includere:</p>
+            <ul>
+                <li>Vista generale dei dispositivi e del loro stato</li>
+                <li>Vista dettagliata di un singolo dispositivo con i suoi segnali</li>
+                <li>Grafici per visualizzare l'andamento dei valori nel tempo</li>
+                <li>Sistema di allarmi e notifiche</li>
+                <li>Configurazione dei dispositivi e dei segnali</li>
+            </ul>
+            
+            <p>Un esempio di controller per la visualizzazione:</p>
+            <div class="highlight">
+                <pre><code>@Controller
+@RequestMapping("/dashboard")
+public class DashboardController {
+    private final DeviceService deviceService;
+    private final DeviceStateService deviceStateService;
+    
+    public DashboardController(DeviceService deviceService, DeviceStateService deviceStateService) {
+        this.deviceService = deviceService;
+        this.deviceStateService = deviceStateService;
+    }
+    
+    @GetMapping
+    public String dashboard(Model model) {
+        List<Device> devices = deviceService.findAll();
+        model.addAttribute("devices", devices);
+        return "dashboard/index";
+    }
+    
+    @GetMapping("/device/{id}")
+    public String deviceDetails(@PathVariable String id, Model model) {
+        Device device = deviceService.findById(id);
+        DeviceState state = deviceStateService.getCurrentState(id);
+        
+        model.addAttribute("device", device);
+        model.addAttribute("state", state);
+        
+        return "dashboard/device-details";
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <div id="esercizi" class="section">
+            <h2>11. Esercizi pratici</h2>
+            <p>Durante il corso, gli studenti dovranno completare una serie di esercizi pratici:</p>
+            
+            <ol>
+                <li>Configurare un progetto Spring Boot con MongoDB</li>
+                <li>Implementare il modello dati e il livello di accesso ai dati (repository)</li>
+                <li>Creare API REST per la gestione dei dispositivi e delle configurazioni</li>
+                <li>Implementare un driver di esempio per una sorgente dati (es. simulazione)</li>
+                <li>Integrare il driver con il sistema di polling</li>
+                <li>Implementare la logica di allarme</li>
+                <li>Creare una dashboard per visualizzare i dati</li>
+                <li>Estendere l'applicazione con funzionalità aggiuntive (es. notifiche, export dati)</li>
+            </ol>
+        </div>
+
+        <div id="conclusioni" class="section">
+            <h2>12. Conclusioni</h2>
+            <p>Al termine di questo corso, gli studenti avranno sviluppato un'applicazione completa per l'acquisizione e la visualizzazione di telemetrie, utilizzando tecnologie moderne come Java, Spring Boot e MongoDB.</p>
+            
+            <p>Avranno appreso:</p>
+            <ul>
+                <li>I principi fondamentali di Spring Boot</li>
+                <li>La progettazione di API REST</li>
+                <li>L'utilizzo di Spring Data con MongoDB</li>
+                <li>Pattern di progettazione come Factory e Strategy</li>
+                <li>Implementazione di job schedulati</li>
+                <li>Sviluppo di sistemi modulari e estensibili</li>
+                <li>Creazione di dashboard per la visualizzazione dei dati</li>
+            </ul>
+            
+            <p>Questo progetto può servire come base per applicazioni di telemetria più complesse e specializzate.</p>
+        </div>
+    </div>
+</body>
+</html>
