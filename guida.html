@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sinelec -  Stage - 2025</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         :root {
             --primary-color: #3498db;
@@ -93,6 +94,10 @@
         .diagram {
             margin: 25px auto;
             text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .note {
@@ -151,6 +156,11 @@
         .toc a:hover {
             color: var(--primary-color);
             text-decoration: underline;
+        }
+
+        .mermaid {
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -224,12 +234,36 @@
                 <pre><code>@Service
 public class DeviceService {
     private final DeviceRepository deviceRepository;
+    private final DeviceTypeRepository deviceTypeRepository;
     
     // Constructor Injection
-    public DeviceService(DeviceRepository deviceRepository) {
+    public DeviceService(DeviceRepository deviceRepository, DeviceTypeRepository deviceTypeRepository) {
         this.deviceRepository = deviceRepository;
+        this.deviceTypeRepository = deviceTypeRepository;
+    }
+    
+    // Field Injection (meno consigliata)
+    // @Autowired
+    // private DeviceRepository deviceRepository;
+    
+    // Setter Injection
+    // private DeviceRepository deviceRepository;
+    // @Autowired
+    // public void setDeviceRepository(DeviceRepository deviceRepository) {
+    //     this.deviceRepository = deviceRepository;
+    // }
+    
+    public List<Device> findAllActiveDevices() {
+        return deviceRepository.findByActive(true);
     }
 }</code></pre>
+                <p>In questo esempio, Spring inietta automaticamente le implementazioni di DeviceRepository e DeviceTypeRepository nel costruttore del DeviceService. Questo approccio è preferibile perché:</p>
+                <ul>
+                    <li>Rende esplicite le dipendenze</li>
+                    <li>Facilita i test unitari</li>
+                    <li>Garantisce l'immutabilità delle dipendenze</li>
+                    <li>Evita problemi di dipendenze circolari</li>
+                </ul>
             </div>
             
             <h3>Bean e loro annotazioni</h3>
@@ -390,13 +424,19 @@ public class Reading {
     @Id
     private String id;
     private String deviceId;
+    private String signalId;  // ID del segnale specifico
     private Date timestamp;
-    
-    // Valori letti dei segnali
-    private Map<String, Object> values;
+    private Object value;     // Valore del segnale
     
     // Getters e setters
 }</code></pre>
+                <p>Una lettura (Storico) rappresenta il valore di un singolo segnale per un dispositivo specifico in un determinato momento. Ogni istanza di Storico contiene:</p>
+                <ul>
+                    <li><strong>deviceId</strong>: L'identificativo del dispositivo da cui proviene la lettura</li>
+                    <li><strong>signalId</strong>: L'identificativo del segnale specifico letto</li>
+                    <li><strong>timestamp</strong>: Il momento esatto in cui è stata effettuata la lettura</li>
+                    <li><strong>value</strong>: Il valore effettivo letto (può essere di vari tipi in base al SignalType)</li>
+                </ul>
             </div>
             
             <h3>Datasource (Sorgente Dati)</h3>
@@ -430,7 +470,7 @@ public class Datasource {
 
         <div id="repository" class="section">
             <h2>5. Repository</h2>
-            <p>I repository di Spring Data ci permettono di interagire con il database MongoDB in modo semplice e dichiarativo.</p>
+            <p>I repository di Spring Data ci permettono di interagire con il database MongoDB in modo semplice e dichiarativo. Spring Data implementa automaticamente metodi di query basati sui nomi dei metodi definiti nelle interfacce repository.</p>
             
             <h3>DeviceRepository</h3>
             <div class="highlight">
@@ -440,7 +480,26 @@ public interface DeviceRepository extends MongoRepository<Device, String> {
     List<Device> findByDeviceTypeId(String deviceTypeId);
     List<Device> findByDatasourceId(String datasourceId);
     Optional<Device> findByName(String name);
+    
+    // Query più complesse con @Query
+    @Query("{'location': ?0, 'active': true}")
+    List<Device> findActiveDevicesByLocation(String location);
+    
+    // Query di aggregazione per statistiche
+    @Aggregation(pipeline = {
+        "{ $match: { 'active': true } }",
+        "{ $group: { '_id': '$deviceTypeId', 'count': { $sum: 1 } } }"
+    })
+    List<DeviceTypeCount> countByDeviceType();
 }</code></pre>
+                <p>Questa interfaccia estende MongoRepository che fornisce metodi CRUD di base e paginazione. I metodi personalizzati sono generati automaticamente in base alla convenzione dei nomi:</p>
+                <ul>
+                    <li><strong>findByActive</strong>: Trova tutti i dispositivi con stato attivo/inattivo</li>
+                    <li><strong>findByDeviceTypeId</strong>: Trova dispositivi di un certo tipo</li>
+                    <li><strong>findByDatasourceId</strong>: Trova dispositivi collegati a una specifica sorgente dati</li>
+                    <li><strong>findByName</strong>: Trova un dispositivo per nome (restituisce Optional per gestire il caso in cui non esista)</li>
+                </ul>
+                <p>Le annotazioni @Query e @Aggregation ci permettono di definire query MongoDB complesse quando la convenzione dei nomi non è sufficiente.</p>
             </div>
             
             <h3>DeviceTypeRepository</h3>
@@ -621,10 +680,15 @@ public class DeviceController {
             <div class="highlight">
                 <p>Interfaccia Driver:</p>
                 <pre><code>public interface Driver {
+    /**
+     * Restituisce l'identificatore univoco di questo tipo di driver
+     */
+    String getId();
+    
     void initialize(Datasource datasource);
     void connect() throws DriverException;
     void disconnect();
-    Reading read(Device device) throws DriverException;
+    Reading[] read(Device[] devices) throws DriverException;
     boolean isConnected();
 }</code></pre>
             </div>
@@ -636,6 +700,11 @@ public class OpcUaDriver implements Driver {
     private Datasource datasource;
     private boolean connected;
     // Altre proprietà specifiche per OPC UA
+    
+    @Override
+    public String getId() {
+        return "opcua";
+    }
     
     @Override
     public void initialize(Datasource datasource) {
@@ -660,22 +729,42 @@ public class OpcUaDriver implements Driver {
     }
     
     @Override
-    public Reading read(Device device) throws DriverException {
+    public Reading[] read(Device[] devices) throws DriverException {
         if (!connected) {
             throw new DriverException("Driver not connected");
         }
         
         try {
-            // Logica per leggere i valori dal server OPC UA
-            Reading reading = new Reading();
-            reading.setDeviceId(device.getId());
-            reading.setTimestamp(new Date());
+            List<Reading> readingsList = new ArrayList<>();
             
-            Map<String, Object> values = new HashMap<>();
-            // Popolamento dei valori letti
+            // Iterare su tutti i dispositivi
+            for (Device device : devices) {
+                DeviceType deviceType = getDeviceType(device.getDeviceTypeId());
+                
+                // Per ogni dispositivo, iteriamo sui suoi segnali
+                for (Signal signal : deviceType.getSignals()) {
+                    // Verifichiamo se questo segnale è configurato per questo dispositivo
+                    if (isSignalConfiguredForDevice(signal.getId(), device)) {
+                        // Costruiamo il path OPC UA o altra informazione necessaria per leggere questo segnale
+                        String nodePath = buildNodePath(device, signal);
+                        
+                        // Leggere il valore dal server OPC UA
+                        Object value = readValueFromOpcUa(nodePath);
+                        
+                        // Creare una nuova lettura
+                        Reading reading = new Reading();
+                        reading.setDeviceId(device.getId());
+                        reading.setSignalId(signal.getId());
+                        reading.setTimestamp(new Date());
+                        reading.setValue(value);
+                        
+                        readingsList.add(reading);
+                    }
+                }
+            }
             
-            reading.setValues(values);
-            return reading;
+            // Conversione da List a array
+            return readingsList.toArray(new Reading[0]);
         } catch (Exception e) {
             throw new DriverException("Failed to read from OPC UA server", e);
         }
@@ -685,6 +774,27 @@ public class OpcUaDriver implements Driver {
     public boolean isConnected() {
         return connected;
     }
+    
+    // Metodi helper per la lettura
+    private DeviceType getDeviceType(String deviceTypeId) {
+        // Recuperare il device type dal repository
+        return null; // Da implementare
+    }
+    
+    private boolean isSignalConfiguredForDevice(String signalId, Device device) {
+        // Verificare se il segnale è configurato per questo dispositivo
+        return true; // Da implementare
+    }
+    
+    private String buildNodePath(Device device, Signal signal) {
+        // Costruire il path per il nodo OPC UA
+        return ""; // Da implementare
+    }
+    
+    private Object readValueFromOpcUa(String nodePath) {
+        // Leggere il valore dal server OPC UA
+        return null; // Da implementare
+    }
 }</code></pre>
             </div>
             
@@ -692,170 +802,140 @@ public class OpcUaDriver implements Driver {
                 <p>Factory per i driver:</p>
                 <pre><code>@Service
 public class DriverFactory {
-    private final Map<String, Driver> drivers;
+    private static final Logger logger = LoggerFactory.getLogger(DriverFactory.class);
     
-    public DriverFactory(List<Driver> availableDrivers) {
-        // Mappiamo i driver disponibili per tipo
-        this.drivers = new HashMap<>();
+    private final Map<String, String> driverBeanMap;
+    private final ApplicationContext applicationContext;
+    
+    /**
+     * Costruttore che inietta automaticamente tutti i bean che implementano l'interfaccia Driver
+     * e l'ApplicationContext per creare nuove istanze
+     */
+    @Autowired
+    public DriverFactory(List<Driver> availableDrivers, ApplicationContext applicationContext) {
+        this.driverBeanMap = new HashMap<>();
+        this.applicationContext = applicationContext;
         
-        // Registriamo i driver (nell'applicazione reale, questo potrebbe essere fatto con reflection)
-        drivers.put("opcua", new OpcUaDriver());
-        drivers.put("modbus", new ModbusDriver());
-        drivers.put("mqtt", new MqttDriver());
-        // Altri driver...
+        // Mappare gli ID dei driver con i nomi dei bean
+        for (Driver driver : availableDrivers) {
+            driverBeanMap.put(driver.getId().toLowerCase(), driver.getClass().getName());
+            logger.info("Registered driver type: {} - {}", driver.getId(), driver.getClass().getName());
+        }
     }
     
+    /**
+     * Crea una nuova istanza di driver basata sull'ID
+     * I driver non sono singleton perché hanno stato (datasource, connection)
+     */
     public Driver createDriver(String driverId) {
-        Driver driver = drivers.get(driverId.toLowerCase());
-        if (driver == null) {
+        String driverClassName = driverBeanMap.get(driverId.toLowerCase());
+        if (driverClassName == null) {
             throw new IllegalArgumentException("Unsupported driver type: " + driverId);
         }
-        return driver;
+        
+        try {
+            // Crea una nuova istanza del driver usando l'ApplicationContext
+            // Questo garantisce che tutte le dipendenze del driver siano correttamente iniettate
+            Class<?> driverClass = Class.forName(driverClassName);
+            return (Driver) applicationContext.getBean(driverClass);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Driver class not found: " + driverClassName, e);
+        }
     }
 }</code></pre>
+
+                <p>Con questo approccio, ogni driver implementa il metodo <code>getId()</code> per identificarsi in modo univoco. 
+                La <code>DriverFactory</code> utilizza l'<code>ApplicationContext</code> di Spring per creare nuove istanze di driver, 
+                garantendo che tutte le dipendenze siano correttamente iniettate mentre ogni istanza mantiene il proprio stato.</p>
+            </div>
+            
+            <h3>Bean Stateful e Stateless in Spring</h3>
+            <div class="note">
+                <p>In Spring, i bean possono essere configurati con diversi scope che determinano il loro ciclo di vita e stato:</p>
+                
+                <h4>Bean Stateless (Singleton)</h4>
+                <ul>
+                    <li><strong>Scope</strong>: <code>@Scope("singleton")</code> - default se non specificato</li>
+                    <li><strong>Caratteristiche</strong>: Una sola istanza del bean viene creata per l'intero ApplicationContext</li>
+                    <li><strong>Uso</strong>: Servizi, repository, factory che non mantengono stato dell'applicazione</li>
+                    <li><strong>Vantaggi</strong>: Migliori performance, minor consumo di memoria</li>
+                    <li><strong>Svantaggi</strong>: Non adatto per componenti che devono mantenere stato per ogni client</li>
+                    <li><strong>Esempio</strong>: <code>DeviceService</code>, <code>DriverFactory</code></li>
+                </ul>
+                
+                <h4>Bean Stateful (Prototype)</h4>
+                <ul>
+                    <li><strong>Scope</strong>: <code>@Scope("prototype")</code></li>
+                    <li><strong>Caratteristiche</strong>: Una nuova istanza viene creata ogni volta che il bean viene richiesto</li>
+                    <li><strong>Uso</strong>: Componenti che mantengono stato, come i driver di connessione</li>
+                    <li><strong>Vantaggi</strong>: Isolamento dello stato per ogni istanza</li>
+                    <li><strong>Svantaggi</strong>: Maggior consumo di memoria, potrebbero essere necessari meccanismi di cleanup espliciti</li>
+                    <li><strong>Esempio</strong>: <code>Driver</code> - Ogni connessione a una sorgente dati ha il suo stato</li>
+                </ul>
+                
+                <pre><code>@Component
+@Scope("prototype")  // Crea una nuova istanza ogni volta che viene richiesto
+public class OpcUaDriver implements Driver {
+    // Implementazione...
+}</code></pre>
+                
+                <h4>Altri scope in Spring</h4>
+                <ul>
+                    <li><strong>request</strong>: Una istanza per ogni richiesta HTTP</li>
+                    <li><strong>session</strong>: Una istanza per ogni sessione HTTP</li>
+                    <li><strong>application</strong>: Una istanza per ogni ServletContext</li>
+                    <li><strong>websocket</strong>: Una istanza per ogni WebSocket</li>
+                </ul>
+                
+                <p>Nel nostro caso dei driver, è fondamentale usare lo scope <code>prototype</code> poiché ogni driver mantiene uno stato specifico per la connessione a una particolare sorgente dati. Questo impedisce che più sorgenti dati condividano lo stesso stato di connessione, causando potenziali conflitti.</p>
             </div>
         </div>
 
         <div id="engine" class="section">
             <h2>9. Engine e Scheduling</h2>
-            <p>Implementeremo un engine che si occupa di gestire i driver e di leggere periodicamente i dati dalle sorgenti.</p>
+            <p>L'Engine di telemetria è il cuore del sistema di acquisizione dati. Si occupa di inizializzare i driver, gestire le connessioni alle sorgenti dati e schedulare la lettura periodica dei dispositivi.</p>
             
-            <h3>TelemetryEngine</h3>
+            <h3>Configurazione dello Scheduling</h3>
             <div class="highlight">
-                <pre><code>@Service
-public class TelemetryEngine {
-    private static final Logger logger = LoggerFactory.getLogger(TelemetryEngine.class);
+                <pre><code>@Configuration
+@EnableScheduling
+public class SchedulingConfig {
     
-    private final DatasourceRepository datasourceRepository;
-    private final DeviceRepository deviceRepository;
-    private final DeviceStateRepository deviceStateRepository;
-    private final ReadingRepository readingRepository;
-    private final DriverFactory driverFactory;
-    
-    private final Map<String, Driver> activeDrivers = new ConcurrentHashMap<>();
-    
-    public TelemetryEngine(
-            DatasourceRepository datasourceRepository,
-            DeviceRepository deviceRepository,
-            DeviceStateRepository deviceStateRepository,
-            ReadingRepository readingRepository,
-            DriverFactory driverFactory) {
-        this.datasourceRepository = datasourceRepository;
-        this.deviceRepository = deviceRepository;
-        this.deviceStateRepository = deviceStateRepository;
-        this.readingRepository = readingRepository;
-        this.driverFactory = driverFactory;
-    }
-    
-    @PostConstruct
-    public void initialize() {
-        // Carica tutte le sorgenti dati attive
-        List<Datasource> activeDatasources = datasourceRepository.findByActive(true);
-        
-        // Inizializza i driver per ogni sorgente dati
-        for (Datasource datasource : activeDatasources) {
-            try {
-                Driver driver = driverFactory.createDriver(datasource.getDriverId());
-                driver.initialize(datasource);
-                driver.connect();
-                activeDrivers.put(datasource.getId(), driver);
-                logger.info("Initialized driver for datasource: {}", datasource.getName());
-            } catch (Exception e) {
-                logger.error("Failed to initialize driver for datasource: {}", datasource.getName(), e);
-            }
-        }
-    }
-    
-    @PreDestroy
-    public void shutdown() {
-        // Disconnetti tutti i driver
-        for (Driver driver : activeDrivers.values()) {
-            try {
-                driver.disconnect();
-            } catch (Exception e) {
-                logger.error("Error disconnecting driver", e);
-            }
-        }
-        activeDrivers.clear();
-    }
-    
-    @Scheduled(fixedDelayString = "${telemetry.polling.interval:5000}")
-    public void pollDevices() {
-        logger.debug("Starting polling cycle");
-        
-        // Ottieni tutti i dispositivi attivi
-        List<Device> activeDevices = deviceRepository.findByActive(true);
-        
-        for (Device device : activeDevices) {
-            String datasourceId = device.getDatasourceId();
-            if (datasourceId == null || !activeDrivers.containsKey(datasourceId)) {
-                continue;
-            }
-            
-            Driver driver = activeDrivers.get(datasourceId);
-            
-            try {
-                Reading reading = driver.read(device);
-                readingRepository.save(reading);
-                
-                // Aggiorna lo stato del dispositivo
-                updateDeviceState(device, reading);
-                
-                logger.debug("Successfully polled device: {}", device.getName());
-            } catch (Exception e) {
-                logger.error("Error polling device: {}", device.getName(), e);
-            }
-        }
-    }
-    
-    private void updateDeviceState(Device device, Reading reading) {
-        // Recupera o crea un nuovo stato del dispositivo
-        DeviceState deviceState = deviceStateRepository.findTopByDeviceIdOrderByTimestampDesc(device.getId())
-                .orElseGet(() -> {
-                    DeviceState newState = new DeviceState();
-                    newState.setDeviceId(device.getId());
-                    newState.setSignalStates(new HashMap<>());
-                    return newState;
-                });
-        
-        // Aggiorna il timestamp
-        deviceState.setTimestamp(new Date());
-        
-        // Aggiorna i valori dei segnali
-        for (Map.Entry<String, Object> entry : reading.getValues().entrySet()) {
-            String signalId = entry.getKey();
-            Object value = entry.getValue();
-            
-            SignalState signalState = deviceState.getSignalStates().getOrDefault(signalId, new SignalState());
-            signalState.setSignalId(signalId);
-            signalState.setValue(value);
-            signalState.setTimestamp(reading.getTimestamp());
-            
-            // Controlla le condizioni di allarme
-            checkAlarmCondition(device, signalId, value, signalState);
-            
-            deviceState.getSignalStates().put(signalId, signalState);
-        }
-        
-        deviceStateRepository.save(deviceState);
-    }
-    
-    private void checkAlarmCondition(Device device, String signalId, Object value, SignalState signalState) {
-        // Implementazione della logica di controllo degli allarmi
-        // ...
+    @Bean
+    public TaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(10); // Numero di thread per esecuzioni parallele
+        scheduler.setThreadNamePrefix("telemetry-scheduler-");
+        scheduler.setErrorHandler(throwable -> 
+            logger.error("Error in scheduled task", throwable));
+        return scheduler;
     }
 }</code></pre>
+                <p>Questa configurazione abilita lo scheduling in Spring e configura un pool di thread per eseguire operazioni pianificate in parallelo.</p>
             </div>
             
-            <div class="note">
-                <p><strong>Nota sulle annotazioni di scheduling:</strong></p>
-                <ul>
-                    <li><code>@PostConstruct</code>: Eseguito dopo l'inizializzazione del bean</li>
-                    <li><code>@PreDestroy</code>: Eseguito prima della distruzione del bean</li>
-                    <li><code>@Scheduled</code>: Definisce un task schedulato</li>
-                </ul>
-                <p>Per abilitare lo scheduling in Spring Boot, bisogna aggiungere <code>@EnableScheduling</code> a una classe di configurazione.</p>
-            </div>
+            <h3>Architettura dell'Engine</h3>
+            <p>L'Engine di telemetria segue un'architettura modulare:</p>
+            <ul>
+                <li><strong>Inizializzazione</strong>: Carica le sorgenti dati attive e inizializza i driver</li>
+                <li><strong>Polling</strong>: Esegue letture periodiche dai dispositivi raggruppati per sorgente dati</li>
+                <li><strong>Elaborazione</strong>: Salva le letture e aggiorna gli stati dei dispositivi</li>
+                <li><strong>Monitoraggio</strong>: Verifica le condizioni di allarme</li>
+            </ul>
+            
+            <p>Il ciclo di vita dell'Engine è gestito da Spring attraverso le annotazioni @PostConstruct e @PreDestroy:</p>
+            <ul>
+                <li><strong>@PostConstruct</strong>: Eseguito dopo l'inizializzazione del bean, utilizzato per caricare le sorgenti dati e inizializzare i driver</li>
+                <li><strong>@PreDestroy</strong>: Eseguito prima della distruzione del bean, utilizzato per disconnettere ordinatamente i driver</li>
+            </ul>
+            
+            <h3>Gestione delle Eccezioni</h3>
+            <p>L'Engine implementa una robusta gestione delle eccezioni per garantire che un errore in un dispositivo o sorgente dati non comprometta l'intero sistema:</p>
+            <ul>
+                <li>Errori di connessione sono loggati e non impediscono l'inizializzazione di altre sorgenti</li>
+                <li>Errori durante la lettura sono catturati per singolo dispositivo/sorgente</li>
+                <li>Il sistema tenta automaticamente di riconnettersi alle sorgenti fallite</li>
+            </ul>
         </div>
 
         <div id="frontend" class="section">
@@ -942,6 +1022,158 @@ public class DashboardController {
             
             <p>Questo progetto può servire come base per applicazioni di telemetria più complesse e specializzate.</p>
         </div>
+
+        <div id="diagrammi" class="section">
+            <h2>4.1 Diagrammi del modello</h2>
+            
+            <h3>Diagramma Entità-Relazione (E/R)</h3>
+            <div class="diagram">
+                <div class="mermaid">
+                    erDiagram
+                    DeviceType ||--o{ Device : "è di tipo"
+                    Device }|--|| Datasource : "utilizza"
+                    Device ||--o{ DeviceState : "ha"
+                    DeviceType ||--o{ Signal : "definisce"
+                    Device ||--o{ Storico : "produce"
+                    Datasource ||--o{ Storico : "fornisce"
+                    
+                    DeviceType {
+                        string id PK
+                        string name
+                        string description
+                    }
+                    
+                    Device {
+                        string id PK
+                        string name
+                        string description
+                        string location
+                        boolean active
+                        string deviceTypeId FK
+                        string datasourceId FK
+                        object configuration
+                    }
+                    
+                    Datasource {
+                        string id PK
+                        string name
+                        string description
+                        string driverId
+                        boolean active
+                        object configuration
+                    }
+                    
+                    DeviceState {
+                        string id PK
+                        string deviceId FK
+                        date timestamp
+                        object signalStates
+                    }
+                    
+                    Storico {
+                        string id PK
+                        string deviceId FK
+                        string signalId
+                        date timestamp
+                        object value
+                    }
+                </div>
+            </div>
+            
+            <h3>Diagramma delle Classi</h3>
+            <div class="diagram">
+                <pre>
++------------------+    +-------------------+    +------------------+
+| DeviceRepository |    | DeviceService     |    | DeviceController |
++------------------+    +-------------------+    +------------------+
+| findByActive     |    | deviceRepository  |    | deviceService    |
+| findByName       |<---| findAll           |<---| getAllDevices    |
+| findById         |    | findById          |    | getDeviceById    |
+| save             |    | save              |    | createDevice     |
+| deleteById       |    | deleteById        |    | updateDevice     |
++------------------+    +-------------------+    | deleteDevice     |
+                                                 +------------------+
+                                                 
++------------------+    +-------------------+    
+| Driver Interface |    | TelemetryEngine   |    
++------------------+    +-------------------+    
+| getId            |    | datasourceRepo    |    
+| initialize       |    | deviceRepo        |    
+| connect          |    | readingRepo       |    
+| disconnect       |    | driverFactory     |    
+| read             |<---| activeDrivers     |    
+| isConnected      |    | initialize        |    
++------------------+    | shutdown          |    
+        ^               | pollDevices       |    
+        |               +-------------------+    
+        |                        |               
+        |                        v               
++------------------+    +-------------------+    
+| OpcUaDriver      |    | DriverFactory     |    
++------------------+    +-------------------+    
+| datasource       |    | driverBeanMap     |    
+| connected        |    | applicationContext|    
+| getId            |    | createDriver      |    
+| initialize       |    +-------------------+    
+| connect          |            ^               
+| disconnect       |            |               
+| read             |            |               
+| isConnected      |    +-------------------+    
++------------------+    | ModbusDriver      |    
+                        +-------------------+
+                        | ...               |
+                        +-------------------+
+                </pre>
+            </div>
+
+            <h3>Architettura del sistema a componenti</h3>
+            <div class="diagram">
+                <div class="mermaid">
+                    flowchart TD
+                        subgraph Client
+                        UI[Frontend/Dashboard]
+                        end
+                        
+                        subgraph API
+                        REST[REST Controllers]
+                        end
+                        
+                        subgraph Business
+                        Services[Service Layer]
+                        Engine[Telemetry Engine]
+                        end
+                        
+                        subgraph Data
+                        Repositories[Repository Layer]
+                        MongoDB[(MongoDB)]
+                        end
+                        
+                        subgraph Telemetry
+                        Drivers[Driver Components]
+                        DataSources[External Data Sources]
+                        end
+                        
+                        UI -->|HTTP Requests| REST
+                        REST -->|Method Calls| Services
+                        Services -->|CRUD Operations| Repositories
+                        Repositories -->|Queries/Updates| MongoDB
+                        Engine -->|Uses| Services
+                        Engine -->|Creates| Drivers
+                        Drivers -->|Connects to| DataSources
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Inizializzazione di Mermaid con tema chiaro
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: { useMaxWidth: true },
+            er: { useMaxWidth: true },
+            classdiagram: { useMaxWidth: true }
+        });
+    </script>
 </body>
 </html>
