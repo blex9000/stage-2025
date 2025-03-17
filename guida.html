@@ -914,6 +914,124 @@ public class SchedulingConfig {
                 <p>Questa configurazione abilita lo scheduling in Spring e configura un pool di thread per eseguire operazioni pianificate in parallelo.</p>
             </div>
             
+            <h3>Utilizzo dell'annotazione @Scheduled</h3>
+            <div class="highlight">
+                <pre><code>@Service
+public class TelemetryEngine {
+    private static final Logger logger = LoggerFactory.getLogger(TelemetryEngine.class);
+    
+    private final DeviceRepository deviceRepository;
+    private final ReadingRepository readingRepository;
+    private final DeviceStateRepository deviceStateRepository;
+    private final DriverFactory driverFactory;
+    
+    // Mappa dei driver attivi, chiave = datasourceId
+    private final Map<String, Driver> activeDrivers = new ConcurrentHashMap<>();
+    
+    public TelemetryEngine(DeviceRepository deviceRepository, 
+                          ReadingRepository readingRepository,
+                          DeviceStateRepository deviceStateRepository, 
+                          DriverFactory driverFactory) {
+        this.deviceRepository = deviceRepository;
+        this.readingRepository = readingRepository;
+        this.deviceStateRepository = deviceStateRepository;
+        this.driverFactory = driverFactory;
+    }
+    
+    /**
+     * Scheduled con espressione cron
+     * Eseguito ogni 5 minuti (0 */5 * * * *)
+     */
+    @Scheduled(cron = "0 */5 * * * *")
+    public void pollDevicesCron() {
+        logger.info("Executing scheduled device polling with cron expression");
+        pollDevices();
+    }
+    
+    /**
+     * Scheduled con fixedRate
+     * Eseguito ogni 60000 millisecondi (1 minuto)
+     * L'intervallo viene calcolato dall'inizio dell'esecuzione precedente
+     */
+    @Scheduled(fixedRate = 60000)
+    public void pollDevicesFixedRate() {
+        logger.info("Executing scheduled device polling at fixed rate");
+        pollDevices();
+    }
+    
+    /**
+     * Scheduled con fixedDelay
+     * Eseguito 30 secondi dopo il completamento dell'esecuzione precedente
+     */
+    @Scheduled(fixedDelay = 30000)
+    public void pollDevicesFixedDelay() {
+        logger.info("Executing scheduled device polling with fixed delay");
+        pollDevices();
+    }
+    
+    /**
+     * Scheduled con initialDelay e fixedDelay
+     * Attende 10 secondi all'avvio prima della prima esecuzione
+     * Quindi esegue ogni 2 minuti dopo il completamento dell'esecuzione precedente
+     */
+    @Scheduled(initialDelay = 10000, fixedDelay = 120000)
+    public void pollDevicesWithInitialDelay() {
+        logger.info("Executing scheduled device polling with initial delay");
+        pollDevices();
+    }
+    
+    // Metodo che contiene la logica effettiva del polling
+    private void pollDevices() {
+        try {
+            logger.info("Starting device polling...");
+            
+            // Logica di polling dei dispositivi
+            // ...
+            
+            logger.info("Device polling completed successfully");
+        } catch (Exception e) {
+            logger.error("Error during device polling", e);
+        }
+    }
+}</code></pre>
+                <p>L'annotazione <code>@Scheduled</code> offre diverse opzioni per configurare l'esecuzione pianificata di metodi:</p>
+                <ul>
+                    <li><strong>cron</strong>: Utilizza un'espressione cron per definire una pianificazione complessa</li>
+                    <li><strong>fixedRate</strong>: Esegue il metodo a intervalli fissi, indipendentemente dalla durata dell'esecuzione</li>
+                    <li><strong>fixedDelay</strong>: Attende un intervallo specifico dopo il completamento dell'esecuzione precedente</li>
+                    <li><strong>initialDelay</strong>: Attende un determinato periodo prima della prima esecuzione</li>
+                </ul>
+                
+                <h4>Espressioni cron</h4>
+                <p>Le espressioni cron sono composte da 6 campi:</p>
+                <pre>
+┌───────────── secondo (0-59)
+│ ┌───────────── minuto (0-59)
+│ │ ┌───────────── ora (0-23)
+│ │ │ ┌───────────── giorno del mese (1-31)
+│ │ │ │ ┌───────────── mese (1-12 o JAN-DEC)
+│ │ │ │ │ ┌───────────── giorno della settimana (0-7 o SUN-SAT, 0 e 7 rappresentano domenica)
+│ │ │ │ │ │
+* * * * * *</pre>
+                
+                <p>Esempi comuni di espressioni cron:</p>
+                <ul>
+                    <li><code>0 0 * * * *</code> - Ogni ora, al minuto 0, secondo 0</li>
+                    <li><code>0 0 0 * * *</code> - Ogni giorno a mezzanotte</li>
+                    <li><code>0 0 12 * * MON-FRI</code> - Ogni giorno feriale a mezzogiorno</li>
+                    <li><code>0 0/30 9-17 * * MON-FRI</code> - Ogni 30 minuti nei giorni feriali dalle 9:00 alle 17:30</li>
+                </ul>
+                
+                <h4>Best practices per lo scheduling</h4>
+                <ul>
+                    <li>Preferire <code>fixedDelay</code> per operazioni che non dovrebbero sovrapporsi</li>
+                    <li>Utilizzare <code>fixedRate</code> quando la frequenza deve essere rigorosamente rispettata</li>
+                    <li>Gestire sempre le eccezioni all'interno dei metodi schedulati</li>
+                    <li>Configurare un pool di thread adeguato se ci sono molti job schedulati</li>
+                    <li>Monitorare la durata delle operazioni pianificate</li>
+                </ul>
+            </div>
+            
             <h3>Architettura dell'Engine</h3>
             <p>L'Engine di telemetria segue un'architettura modulare:</p>
             <ul>
