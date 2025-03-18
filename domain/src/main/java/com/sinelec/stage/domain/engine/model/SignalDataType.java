@@ -9,8 +9,7 @@ public enum SignalDataType {
     NUMERIC("Numeric", "Number value with optional decimal places", Double.class),
     INTEGER("Integer", "Whole number value", Integer.class),
     BOOLEAN("Boolean", "True/false value", Boolean.class),
-    STRING("String", "Text value", String.class),
-
+    STRING("String", "Text value", String.class);
     
     private final String label;
     private final String description;

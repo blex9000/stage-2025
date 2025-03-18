@@ -2,6 +2,7 @@ package com.sinelec.stage.domain.engine.driver;
 
 import com.sinelec.stage.domain.engine.model.Datasource;
 import com.sinelec.stage.domain.engine.model.Reading;
+import com.sinelec.stage.domain.engine.model.DeviceCommand;
 
 import java.util.List;
 import java.util.Map;
