@@ -7,19 +7,12 @@
 		<artifactId>project</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<groupId>com.sinelec.stage</groupId>
-	<artifactId>engine</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>Engine</name>
-	<description>Engine Service</description>
+	<artifactId>domain</artifactId>
+	<name>Domain</name>
+	<description>Domain models and shared components</description>
 	<properties>
 	</properties>
 	<dependencies>
-		<dependency>
-			<groupId>com.sinelec.stage</groupId>
-			<artifactId>domain</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
@@ -27,12 +20,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
-			<version>${spring.boot.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<artifactId>spring-boot-starter-validation</artifactId>
 			<version>${spring.boot.version}</version>
 		</dependency>
 		<dependency>
@@ -40,6 +28,17 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 			<version>${spring.boot.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>${lombok.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mvel</groupId>
+			<artifactId>mvel2</artifactId>
+			<version>${mvel.version}</version>
 		</dependency>
 	</dependencies>
 
