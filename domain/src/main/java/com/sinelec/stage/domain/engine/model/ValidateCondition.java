@@ -6,13 +6,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ValidateCondition {
-    @NonNull
-    private String id;
-    @NonNull
-    private String code;
-    @NonNull
-    private String description;
-    @NonNull
-    private Expression expression;
+@EqualsAndHashCode(callSuper = true)
+public class ValidateCondition extends BaseCondition {
+    // Any validation-specific fields
 }

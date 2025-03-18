@@ -8,17 +8,7 @@ import javax.validation.constraints.Size;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AlarmCondition {
-    @NonNull
-    private String id;
-    @NotBlank
-    private String name;
-    @NonNull
-    private String code;
-    @Size(max = 500)
-    private String description;
-    @NonNull
-    private Expression expression;
-
+@EqualsAndHashCode(callSuper = true)
+public class AlarmCondition extends BaseCondition {
     private AlarmSeverity severity;
 }
