@@ -1,16 +1,25 @@
 package com.sinelec.stage.domain.engine.driver;
 
 import com.sinelec.stage.domain.engine.model.Datasource;
+import com.sinelec.stage.domain.engine.model.DriverDefinition;
 import com.sinelec.stage.domain.engine.model.Reading;
 import com.sinelec.stage.domain.engine.model.DeviceCommand;
 
 import java.util.List;
 
+/**
+ * Interface for device communication drivers
+ */
 public interface Driver {
     /**
      * Get the unique driver ID
      */
     String getId();
+    
+    /**
+     * Get the driver definition for registration
+     */
+    DriverDefinition getDefinition();
     
     /**
      * Initialize the driver with the datasource configuration

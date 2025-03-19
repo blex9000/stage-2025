@@ -22,10 +22,9 @@ public class Datasource {
     private String id;
     private String name;
     private String description;
-    private String driverId; // Identifica il tipo di driver da utilizzare
+    private String driverId;
     private boolean active;
-    
-    // Configurazione della sorgente dati
+
     @Builder.Default
     private List<Property> configuration = new ArrayList<>();
     

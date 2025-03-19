@@ -33,12 +33,13 @@ public class TestDataUtil {
         return driverDefinitionRepository.findById("MODBUS_DRIVER")
             .orElseGet(() -> {
                 // Create Modbus TCP driver definition
-                DriverDefinition driver = new DriverDefinition();
-                driver.setId("MODBUS_DRIVER");
-                driver.setName("Modbus TCP Driver");
-                driver.setDescription("Driver for Modbus TCP protocol");
-                driver.setVersion("1.0.0");
-                driver.setType(DriverDefinition.DriverType.MODBUS_TCP);
+                DriverDefinition driver = DriverDefinition.builder()
+                    .id("MODBUS_DRIVER")
+                    .name("Modbus TCP Driver")
+                    .description("Driver for Modbus TCP protocol")
+                    .version("1.0.0")
+                    .tags(List.of("MODBUS_TCP"))
+                    .build();
                 
                 // Configuration properties
                 List<PropertyDefinition> properties = new ArrayList<>();

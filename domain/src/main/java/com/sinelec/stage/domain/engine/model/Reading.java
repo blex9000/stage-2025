@@ -1,10 +1,6 @@
 package com.sinelec.stage.domain.engine.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
@@ -29,16 +25,19 @@ import java.util.Calendar;
     granularity = Granularity.SECONDS
 )
 @CompoundIndexes({
-    @CompoundIndex(name = "device_signal_time_idx", 
-                  def = "{'deviceId': 1, 'signalId': 1, 'timestamp': -1}"),
+    @CompoundIndex(name = "ds_device_signal_time_idx",
+                  def = "{'datasourceId': 1, 'deviceId': 1, 'signalId': 1, 'timestamp': -1}"),
     @CompoundIndex(name = "time_bucket_idx", 
-                  def = "{'deviceId': 1, 'year': 1, 'month': 1, 'day': 1, 'hour': 1}")
+                  def = "{'datasourceId': 1,'deviceId': 1, 'year': 1, 'month': 1, 'day': 1, 'hour': 1}")
 })
 public class Reading {
     @Id
     private String id;
-    
+    @NonNull
+    private String datasourceId;
+    @NonNull
     private String deviceId;
+    @NonNull
     private String signalId;
     
     // Meta-field for time-series optimization (deviceId + signalId)
@@ -67,14 +66,13 @@ public class Reading {
     // Data quality fields
     @Builder.Default
     private boolean valid = true;
-    private String qualityCode;
-    
+
     // Raw value before conversion
     private Object rawValue;
 
-    private void setMetaId(String deviceId, String signalId) {
-        if (deviceId != null && signalId != null) {
-            this.metaId = deviceId + ":" + signalId;
+    private void setMetaId(String datasourceId, String deviceId, String signalId) {
+        if (datasourceId != null && deviceId != null && signalId != null) {
+            this.metaId = datasourceId +":" + deviceId + ":" + signalId;
         }
     }
     

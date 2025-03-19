@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ReadingService {
@@ -57,5 +58,22 @@ public class ReadingService {
     
     public List<Reading> getAlarmReadings(boolean inAlarm) {
         return readingRepository.findByInAlarm(inAlarm);
+    }
+    
+    /**
+     * Create a new reading
+     */
+    public Reading createReading(Reading reading) {
+        // Set created timestamp if not set
+        if (reading.getTimestamp() == null) {
+            reading.setTimestamp(new Date());
+        }
+        
+        // Generate ID if not present
+        if (reading.getId() == null || reading.getId().isEmpty()) {
+            reading.setId(UUID.randomUUID().toString());
+        }
+        
+        return readingRepository.save(reading);
     }
 } 

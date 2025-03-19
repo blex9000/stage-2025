@@ -27,14 +27,6 @@ public class DriverDefinitionService {
         return driverDefinitionRepository.findById(id);
     }
     
-    public List<DriverDefinition> getDriverDefinitionsByName(String name) {
-        return driverDefinitionRepository.findByName(name);
-    }
-    
-    public List<DriverDefinition> getDriverDefinitionsByType(DriverDefinition.DriverType type) {
-        return driverDefinitionRepository.findByType(type);
-    }
-    
     public DriverDefinition createDriverDefinition(DriverDefinition driverDefinition) {
         Date now = new Date();
         driverDefinition.setCreatedAt(now);
@@ -48,7 +40,7 @@ public class DriverDefinitionService {
                 driverDefinition.setName(driverDefinitionDetails.getName());
                 driverDefinition.setDescription(driverDefinitionDetails.getDescription());
                 driverDefinition.setVersion(driverDefinitionDetails.getVersion());
-                driverDefinition.setType(driverDefinitionDetails.getType());
+                driverDefinition.setTags(driverDefinitionDetails.getTags());
                 driverDefinition.setConfigurationProperties(driverDefinitionDetails.getConfigurationProperties());
                 driverDefinition.setUpdatedAt(new Date());
                 return driverDefinitionRepository.save(driverDefinition);

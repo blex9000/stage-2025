@@ -191,4 +191,24 @@ public class DeviceService {
             })
             .orElse(false);
     }
+
+    /**
+     * Get a device definition by its ID
+     */
+    public Optional<DeviceDefinition> getDeviceDefinitionById(String id) {
+        if (deviceDefinitionService == null) {
+            return Optional.empty();
+        }
+        return deviceDefinitionService.getDeviceDefinitionById(id);
+    }
+
+    /**
+     * Get all device definitions
+     */
+    public List<DeviceDefinition> getAllDeviceDefinitions() {
+        if (deviceDefinitionService == null) {
+            return new ArrayList<>();
+        }
+        return deviceDefinitionService.getAllDeviceDefinitions();
+    }
 } 

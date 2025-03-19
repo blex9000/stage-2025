@@ -19,6 +19,7 @@ public class SignalDefinition {
     private String id;
     private String name;
     private String description;
+    private List<String> tags;
     private DataType type;
     private String unit;
     private boolean alarmsEnabled;

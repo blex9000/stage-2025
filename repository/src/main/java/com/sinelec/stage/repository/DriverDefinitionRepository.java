@@ -5,9 +5,9 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DriverDefinitionRepository extends MongoRepository<DriverDefinition, String> {
-    List<DriverDefinition> findByName(String name);
-    List<DriverDefinition> findByType(DriverDefinition.DriverType type);
-} 
+    Optional<DriverDefinition> findById(String id);
+}

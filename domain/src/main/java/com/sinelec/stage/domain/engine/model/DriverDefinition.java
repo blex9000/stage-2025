@@ -23,18 +23,17 @@ public class DriverDefinition {
     private String name;
     private String description;
     private String version;
-    private DriverType type;
-    
+
     @Builder.Default
     private List<PropertyDefinition> configurationProperties = new ArrayList<>();
+    
     @Builder.Default
     private List<PropertyDefinition> signalProperties = new ArrayList<>();
+
+    @Builder.Default
+    private List<String> tags = new ArrayList<>();
     
     private Date createdAt;
     private Date updatedAt;
-    
-    public enum DriverType {
-        MODBUS_TCP, MODBUS_RTU, SNMP, REST, MQTT, OPC_UA, CUSTOM
-    }
 }
 
