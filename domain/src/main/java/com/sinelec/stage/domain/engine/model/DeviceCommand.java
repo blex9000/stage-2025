@@ -1,21 +1,14 @@
 package com.sinelec.stage.domain.engine.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-enum CommandType {
-    WRITE, READ
-}
+import java.util.List;
 
 @Data
 @Builder
@@ -24,30 +17,49 @@ enum CommandType {
 @Document(collection = "deviceCommands")
 public class DeviceCommand {
     @Id
+    @NonNull
     private String id;
+    @NonNull
     private String datasourceId;
+    @NonNull
     private String deviceId;
-    private String signalId;
-    private CommandType commandType;
-
-    @Transient
-    private SignalConfiguration signalConfiguration;
-    @Transient
-    private SignalDefinition signalDefinition;
 
     @Builder.Default
-    private Map<String, String> parameters = new HashMap<>();
+    private CommandType commandType = CommandType.READ;
+
+    @Transient
+    private List<SignalConfiguration> signalConfigurations;
+    @Transient
+    private List<SignalDefinition> signalDefinitions;
+
+    @Builder.Default
+    private List<WriteValue> writeValues = new ArrayList<>();
     
     private Date createdAt;
     private String createdBy;
     
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private CommandStatus status;
     private Date sentAt;
     private Date completedAt;
     private String resultMessage;
     private Integer retryCount;
     
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     public enum CommandStatus {
         PENDING, SENT, ACKNOWLEDGED, COMPLETED, FAILED, CANCELLED
+    }
+
+    public enum CommandType {
+        WRITE, READ
+    }
+
+    @Getter
+    @Setter 
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class WriteValue {
+        private String signalId;
+        private String value;
     }
 } 

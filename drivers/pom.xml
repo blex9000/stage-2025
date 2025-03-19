@@ -7,16 +7,21 @@
 		<artifactId>project</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<artifactId>service</artifactId>
-	<name>Service</name>
-	<description>Service</description>
+	<artifactId>drivers</artifactId>
+	<name>Drivers</name>
+	<description>Drivers</description>
 	<properties>
 	</properties>
 	<dependencies>
-		<dependency>
+        <dependency>
 			<groupId>com.sinelec.stage</groupId>
-			<artifactId>repository</artifactId>
+			<artifactId>domain</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<version>${spring.boot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

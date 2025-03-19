@@ -32,6 +32,3 @@ public class DeviceState {
     private HealthStatus healthStatus;
 }
 
-enum HealthStatus {
-    UNKNOWN, HEALTHY, DEGRADED, CRITICAL, MAINTENANCE
-}

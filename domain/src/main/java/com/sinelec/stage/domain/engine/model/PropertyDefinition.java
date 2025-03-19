@@ -6,26 +6,22 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.ArrayList;
 
-/**
- * Defines a signal that can be monitored or controlled on a device
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SignalDefinition {
-    private String id;
+public class PropertyDefinition {
     private String name;
     private String description;
-    private DataType type;
-    private String unit;
-    private boolean alarmsEnabled;
-    private boolean required = false;  // Default to not required
-    // Alarm configuration
+    private boolean required;
+    private String defaultValue;
+    private DataType valueType;
     @Builder.Default
-    private List<AlarmCondition> alarmConditions = new ArrayList<>();
+    private Map<String, String> allowedValues = new HashMap<>();
     @Builder.Default
     private List<ValidateCondition> validateConditions = new ArrayList<>();
 }

@@ -58,6 +58,17 @@ public class Expression {
     private transient Serializable compiledExpression;
     
     /**
+     * Create a new expression with code and description
+     * 
+     * @param expression The expression code/formula to evaluate
+     * @param description Human-readable description of the expression
+     */
+    public Expression(String expression, String description) {
+        this.expression = expression;
+        this.description = description;
+    }
+    
+    /**
      * Evaluate the expression with the provided variables
      * 
      * @param variables Map of variable names to values available in the expression

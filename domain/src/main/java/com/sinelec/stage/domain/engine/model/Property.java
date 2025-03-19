@@ -10,6 +10,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Property {
-    private String id;
+    private String id;  
+    private String name;
     private String value;
+    
+    /**
+     * Constructor with just name and value for convenience
+     */
+    public Property(String name, String value) {
+        this.name = name;
+        this.value = value;
+    }
 } 

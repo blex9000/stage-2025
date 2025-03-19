@@ -12,6 +12,7 @@
 		<spring.boot.version>3.4.3</spring.boot.version>
 		<lombok.version>1.18.30</lombok.version>
 		<mvel.version>2.4.15.Final</mvel.version>
+		<jackson.version>2.15.2</jackson.version>
 		<maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
 		<maven.compiler.source>20</maven.compiler.source>
 		<maven.compiler.target>20</maven.compiler.target>
@@ -21,7 +22,9 @@
 		<module>repository</module>
 		<module>service</module>
 		<module>controller</module>
+		<module>drivers</module>
 		<module>engine</module>
+		
 	</modules>
 	 <dependencyManagement>
         <dependencies>
@@ -40,6 +43,14 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<version>${spring.boot.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven.compiler.plugin.version}</version>
+				<configuration>
+					<parameters>true</parameters>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
