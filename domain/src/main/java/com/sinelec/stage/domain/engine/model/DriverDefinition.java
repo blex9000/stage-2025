@@ -27,6 +27,8 @@ public class DriverDefinition {
     
     @Builder.Default
     private List<PropertyDefinition> configurationProperties = new ArrayList<>();
+    @Builder.Default
+    private List<PropertyDefinition> signalProperties = new ArrayList<>();
     
     private Date createdAt;
     private Date updatedAt;
