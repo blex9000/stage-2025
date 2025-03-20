@@ -33,7 +33,9 @@ public class DeviceCommand {
     private List<SignalDefinition> signalDefinitions;
 
     @Builder.Default
-    private List<WriteValue> writeValues = new ArrayList<>();
+    private List<Write> write = new ArrayList<>();
+    @Builder.Default
+    private List<Read> read = new ArrayList<>();
     
     private Date createdAt;
     private String createdBy;
@@ -58,8 +60,16 @@ public class DeviceCommand {
     @Setter 
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class WriteValue {
+    public static class Write {
         private String signalId;
         private String value;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Read {
+        private String signalId;
     }
 } 

@@ -195,6 +195,7 @@ public class EngineIntegrationTest {
                 device.getDeviceDefinitionId()).orElseThrow();
         
         readCommand.setSignalDefinitions(deviceDef.getSignals());
+        readCommand.setSignalConfigurations(device.getSignalConfigurations());
         readCommands.add(readCommand);
         
         // 4. Execute read
@@ -222,10 +223,9 @@ public class EngineIntegrationTest {
         writeCommand.setDeviceId(deviceId);
         writeCommand.setDatasourceId(datasourceId);
         writeCommand.setCommandType(DeviceCommand.CommandType.WRITE);
-        DeviceCommand.WriteValue writeValue = new DeviceCommand.WriteValue("temp-signal-id", "25.5");
-        writeCommand.getWriteValues().add(writeValue);
+        DeviceCommand.Write writeValue = new DeviceCommand.Write("temp-signal-id", "25.5");
         writeCommand.setCreatedAt(new Date());
-        
+        writeCommand.getWrite().add(writeValue);
         try {
             driver.write(List.of(writeCommand));
             logger.info("Driver write test successful");
@@ -282,10 +282,9 @@ public class EngineIntegrationTest {
         command.setDeviceId(deviceId);
         command.setDatasourceId(datasourceId);
         command.setCommandType(DeviceCommand.CommandType.WRITE);
-        DeviceCommand.WriteValue writeValue = new DeviceCommand.WriteValue("temp-signal-id", "25.5");
-        command.getWriteValues().add(writeValue);
+        DeviceCommand.Write writeValue = new DeviceCommand.Write("temp-signal-id", "25.5");
         command.setCreatedAt(new Date());
-        
+        command.getWrite().add(writeValue);
         boolean writeResult = engine.write(command);
         assertTrue(writeResult, "Engine write should succeed");
         
@@ -381,8 +380,8 @@ public class EngineIntegrationTest {
             command.setDeviceId(deviceId);
             command.setDatasourceId(datasourceId);
             command.setCommandType(DeviceCommand.CommandType.WRITE);
-            DeviceCommand.WriteValue writeValue = new DeviceCommand.WriteValue("temp-signal-id", "25.5");
-            command.getWriteValues().add(writeValue);
+            DeviceCommand.Write writeValue = new DeviceCommand.Write("temp-signal-id", "25.5");
+            command.getWrite().add(writeValue);
             command.setCreatedAt(new Date());
             
             boolean result = engines.writeCommand(command);

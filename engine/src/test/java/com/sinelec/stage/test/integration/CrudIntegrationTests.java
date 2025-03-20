@@ -444,7 +444,7 @@ public class CrudIntegrationTests {
             .id(UUID.randomUUID().toString()) // Explicitly set ID to avoid NPE
             .deviceId(deviceId)
             .datasourceId(datasourceId)
-            .writeValues(List.of(new DeviceCommand.WriteValue("16fe282e-ea9b-4e2b-9176-9de4789cea8b", "40.0")))
+            .write(List.of(new DeviceCommand.Write("16fe282e-ea9b-4e2b-9176-9de4789cea8b", "40.0")))
             .build();
         
         // POST request to create command
