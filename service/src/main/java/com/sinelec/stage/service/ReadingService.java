@@ -38,6 +38,15 @@ public class ReadingService {
         return readingRepository.findById(id);
     }
     
+    /**
+     * Get all readings for a specific device
+     * @param deviceId The ID of the device
+     * @return List of readings for the device
+     */
+    public List<Reading> getReadingsByDeviceId(String deviceId) {
+        return readingRepository.findByDeviceId(deviceId);
+    }
+    
     public List<Reading> getReadingsByDeviceAndSignal(String deviceId, String signalId) {
         return readingRepository.findByDeviceIdAndSignalId(deviceId, signalId);
     }

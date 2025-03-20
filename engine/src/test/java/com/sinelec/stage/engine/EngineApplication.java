@@ -11,7 +11,8 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
     "com.sinelec.stage.controller",
     "com.sinelec.stage.service",
     "com.sinelec.stage.repository",
-    "com.sinelec.stage.engine.integration"
+    "com.sinelec.stage.engine.integration",
+    "com.sinelec.stage.engine.core"
 })
 @EnableMongoRepositories("com.sinelec.stage.repository")
 @EntityScan("com.sinelec.stage.domain.engine.model")

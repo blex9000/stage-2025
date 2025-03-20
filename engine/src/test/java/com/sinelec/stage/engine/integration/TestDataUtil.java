@@ -3,12 +3,14 @@ package com.sinelec.stage.engine.integration;
 import com.sinelec.stage.domain.engine.model.DriverDefinition;
 import com.sinelec.stage.domain.engine.model.PropertyDefinition;
 import com.sinelec.stage.repository.DriverDefinitionRepository;
+import com.sinelec.stage.service.DeviceDefinitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import com.sinelec.stage.domain.engine.model.*;
 
@@ -19,10 +21,13 @@ import com.sinelec.stage.domain.engine.model.*;
 public class TestDataUtil {
     
     private final DriverDefinitionRepository driverDefinitionRepository;
+    private final DeviceDefinitionService deviceDefinitionService;
     
     @Autowired
-    public TestDataUtil(DriverDefinitionRepository driverDefinitionRepository) {
+    public TestDataUtil(DriverDefinitionRepository driverDefinitionRepository, 
+                         DeviceDefinitionService deviceDefinitionService) {
         this.driverDefinitionRepository = driverDefinitionRepository;
+        this.deviceDefinitionService = deviceDefinitionService;
     }
     
     /**
@@ -80,5 +85,47 @@ public class TestDataUtil {
                 
                 return driverDefinitionRepository.save(driver);
             });
+    }
+    
+    /**
+     * Create a test device definition with predefined signals
+     */
+    public DeviceDefinition createTestDeviceDefinition() {
+        // Create device definition for testing
+        DeviceDefinition deviceDefinition = new DeviceDefinition();
+        deviceDefinition.setName("Test Device Definition");
+        deviceDefinition.setDescription("Definition for automated testing");
+        
+        // Create signal definitions
+        List<SignalDefinition> signals = new ArrayList<>();
+        
+        // Temperature signal
+        SignalDefinition tempSignal = SignalDefinition.builder()
+            .id("temp-signal-id")
+            .name("TEMPERATURE")
+            .description("Temperature measurement")
+            .type(DataType.FLOAT)
+            .unit("°C")
+            .alarmsEnabled(true)
+            .required(true)
+            .build();
+            
+        signals.add(tempSignal);
+        
+        // Status signal
+        SignalDefinition statusSignal = SignalDefinition.builder()
+            .id("status-signal-id")
+            .name("STATUS")
+            .description("Device status")
+            .type(DataType.BOOLEAN)
+            .required(true)
+            .build();
+            
+        signals.add(statusSignal);
+        
+        deviceDefinition.setSignals(signals);
+        
+        // Save or retrieve device definition - using deviceDefinitionService instead of deviceService
+        return deviceDefinitionService.createDeviceDefinition(deviceDefinition);
     }
 } 
