@@ -12,7 +12,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.test.context.ActiveProfiles;
-import com.sinelec.stage.engine.EngineApplication;
+import com.sinelec.stage.engine.EngineTestApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    classes = {EngineApplication.class}
+    classes = {EngineTestApplication.class}
 )
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")
