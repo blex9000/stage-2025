@@ -1,5 +1,5 @@
 // Create a mock driver for tests
-package com.sinelec.stage.engine.integration;
+package com.sinelec.stage.test.integration;
 
 import com.sinelec.stage.domain.engine.driver.Driver;
 import com.sinelec.stage.domain.engine.model.*;

@@ -1,4 +1,4 @@
-package com.sinelec.stage.engine;
+package com.sinelec.stage.test;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;

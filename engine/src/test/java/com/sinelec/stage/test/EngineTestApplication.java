@@ -1,4 +1,4 @@
-package com.sinelec.stage.engine;
+package com.sinelec.stage.test;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,7 +9,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
     "com.sinelec.stage.controller",
     "com.sinelec.stage.service",
     "com.sinelec.stage.repository",
-    "com.sinelec.stage.engine.integration",
     "com.sinelec.stage.engine.core"
 })
 @EnableMongoRepositories("com.sinelec.stage.repository")

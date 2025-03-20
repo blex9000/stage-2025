@@ -1,4 +1,4 @@
-package com.sinelec.stage.engine.integration;
+package com.sinelec.stage.test.integration;
 
 import com.sinelec.stage.domain.engine.model.DriverDefinition;
 import com.sinelec.stage.domain.engine.model.PropertyDefinition;
