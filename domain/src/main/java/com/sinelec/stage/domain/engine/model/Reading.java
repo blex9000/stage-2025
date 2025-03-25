@@ -67,9 +67,6 @@ public class Reading {
     @Builder.Default
     private boolean valid = true;
 
-    // Raw value before conversion
-    private Object rawValue;
-
     private void setMetaId(String datasourceId, String deviceId, String signalId) {
         if (datasourceId != null && deviceId != null && signalId != null) {
             this.metaId = datasourceId +":" + deviceId + ":" + signalId;
