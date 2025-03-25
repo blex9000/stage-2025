@@ -213,11 +213,12 @@ public class Engine {
     /**
      * Write values to devices
      */
-    public boolean executeCommand(DeviceCommand command) {
+    public List<Reading> executeCommand(DeviceCommand command) {
+        List<Reading> readings = new ArrayList<>();
         if (!running.get() || !connected.get()) {
             logger.warn("Cannot exec command - engine for datasource {} is not running/connected",
                     datasourceId);
-            return false;
+            return new ArrayList<>();
         }
         
         try {
@@ -225,15 +226,15 @@ public class Engine {
             enrichCommandWithSignalInfo(command);
             
             // Execute the write
-            driver.execute(List.of(command));
+            readings = driver.execute(List.of(command));
             
             logger.debug("Command {} executed successfully for device {}",
                     command.getId(), command.getDeviceId());
-            return true;
+            return readings;
         } catch (Exception e) {
             logger.error("Error executing command on device {}: {}",
                     command.getDeviceId(), e.getMessage(), e);
-            return false;
+            return new ArrayList<>();
         }
     }
     

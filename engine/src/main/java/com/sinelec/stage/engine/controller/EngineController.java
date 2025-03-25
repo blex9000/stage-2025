@@ -75,8 +75,8 @@ public class EngineController {
   
     
     @PostMapping("/cmd/execute")
-    public ResponseEntity<Boolean> executeCommand(@RequestBody DeviceCommand command) {
-        boolean success = enginesManager.executeCommand(command);
-        return ResponseEntity.ok(success);
+    public ResponseEntity<List<Reading>> executeCommand(@RequestBody DeviceCommand command) {
+        List<Reading> readings = enginesManager.executeCommand(command);
+        return ResponseEntity.ok(readings);
     }
 } 

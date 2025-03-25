@@ -282,10 +282,10 @@ public class Engines {
     /**
      * Execute a command to a device
      */
-    public boolean executeCommand(DeviceCommand command) {
+    public List<Reading> executeCommand(DeviceCommand command) {
         if (command == null || command.getDeviceId() == null || command.getDatasourceId() == null) {
             logger.warn("Invalid command provided");
-            return false;
+            return new ArrayList<>();
         }
         
         String datasourceId = command.getDatasourceId();
@@ -293,12 +293,12 @@ public class Engines {
         
         if (engine == null) {
             logger.warn("Engine for datasource {} not found", datasourceId);
-            return false;
+            return new ArrayList<>();
         }
         
         if (!engine.isRunning() || !engine.isConnected()) {
             logger.warn("Engine for datasource {} is not running/connected", datasourceId);
-            return false;
+            return new ArrayList<>();
         }
         
         return engine.executeCommand(command);
