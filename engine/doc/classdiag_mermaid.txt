@@ -1,0 +1,304 @@
+classDiagram
+    class Engine {
+        -Datasource datasource
+        -List<Device> devices
+        -Driver driver
+        -boolean running
+        -boolean connected
+        +Engine(Datasource, List<Device>, Driver, services...)
+        +boolean start()
+        +void stop()
+        +boolean isRunning()
+        +boolean isConnected()
+        +List<Reading> poll()
+        +boolean write(DeviceCommand)
+        +Map<String, Object> getStatistics()
+    }
+
+    class Engines {
+        -Map<String, Engine> activeEngines
+        -DriverRegistry driverRegistry
+        -Map<String, ScheduledFuture<?>> pollingTasks
+        +List<String> getActiveEngineIds()
+        +Map<String, Boolean> getAllEngineStatus()
+        +boolean createAndStartEngine(Datasource)
+        +List<Reading> pollEngine(String)
+        +boolean stopEngine(String)
+        +boolean restartEngine(String)
+        +Map<String, Object> getEngineStatistics(String)
+        +List<Reading> pollDevices(List<String>)
+        +boolean writeCommand(DeviceCommand)
+        +void loadAndStartEngines()
+        +void shutdownAllEngines()
+    }
+
+    class DriverRegistry {
+        -Map<String, DriverDefinition> driverDefinitions
+        +Driver createDriver(String)
+        +boolean isDriverAvailable(String)
+        +void registerDriver(DriverDefinition)
+    }
+
+    class Driver {
+        <<interface>>
+        +void initialize(Datasource)
+        +boolean connect()
+        +void disconnect()
+        +boolean isConnected()
+        +List<Reading> read(List<DeviceCommand>)
+        +void write(List<DeviceCommand>)
+        +Map<String, Object> getStats()
+    }
+
+    class Datasource {
+        -String id
+        -String name
+        -String description
+        -String driverId
+        -boolean active
+        -List<Property> configuration
+        -Date lastConnection
+        -boolean connected
+        -String connectionStatus
+    }
+
+    class Device {
+        -String id
+        -String name
+        -String description
+        -String location
+        -boolean active
+        -String deviceDefinitionId
+        -String datasourceId
+        -List<SignalConfiguration> signalConfigurations
+    }
+
+    class DeviceDefinition {
+        -String id
+        -String name
+        -String description
+        -List<SignalDefinition> signals
+    }
+
+    class SignalDefinition {
+        -String id
+        -String name
+        -String description
+        -List<String> tags
+        -DataType type
+        -String unit
+        -boolean alarmsEnabled
+        -boolean required
+        -List<AlarmCondition> alarmConditions
+        -List<ValidateCondition> validateConditions
+    }
+
+    class AlarmCondition {
+        -String id
+        -String name
+        -String code
+        -String description
+        -Expression expression
+        -AlarmSeverity severity
+        +boolean evaluate(Map<String, Object>)
+        +boolean evaluate(Reading)
+    }
+
+    class ValidateCondition {
+        -String id
+        -String name
+        -String code
+        -String description
+        -Expression expression
+        +boolean evaluate(Map<String, Object>)
+        +boolean evaluate(Reading)
+    }
+
+    class Expression {
+        -String expression
+        -String description
+        +boolean evaluate(Map<String, Object>)
+        +boolean evaluate()
+        +static boolean evaluateStatic(String, Map<String, Object>)
+    }
+
+    class AlarmSeverity {
+        <<enumeration>>
+        INFO(0)
+        WARNING(1)
+        MINOR(2)
+        MAJOR(3)
+        CRITICAL(4)
+    }
+
+    class DataType {
+        <<enumeration>>
+        DOUBLE
+        FLOAT
+        INTEGER
+        BOOLEAN
+        STRING
+        LONG
+        BIGDECIMAL
+        DATE
+        DATETIME
+        TIMESTAMP
+        BINARY
+        +boolean isValidValue(Object)
+    }
+
+    class DeviceCommand {
+        -String id
+        -String deviceId
+        -String datasourceId
+        -CommandType commandType
+        -List<Write> write
+        -List<Read> read
+        -Date createdAt
+        -String createdBy
+        -CommandStatus status
+        -Date sentAt
+        -Date completedAt
+        -String resultMessage
+        -Integer retryCount
+        -List<SignalDefinition> signalDefinitions
+        -List<SignalConfiguration> signalConfigurations
+    }
+
+    class CommandType {
+        <<enumeration>>
+        WRITE
+        READ
+    }
+
+    class CommandStatus {
+        <<enumeration>>
+        PENDING
+        SENT
+        ACKNOWLEDGED
+        COMPLETED
+        FAILED
+        CANCELLED
+    }
+
+    class DeviceCommand.Write {
+        -String signalId
+        -String value
+    }
+
+    class DeviceCommand.Read {
+        -String signalId
+    }
+
+    class Reading {
+        -String id
+        -String datasourceId
+        -String deviceId
+        -String signalId
+        -String metaId
+        -Date timestamp
+        -Object value
+        -Double numericValue
+        -int year
+        -int month
+        -int day
+        -int hour
+        -boolean inAlarm
+        -String alarmMessage
+        -AlarmSeverity alarmSeverity
+        -boolean valid
+        +<T> T getValueAs(Class<T>)
+    }
+
+    class HealthStatus {
+        <<enumeration>>
+        UNKNOWN
+        HEALTHY
+        DEGRADED
+        CRITICAL
+        MAINTENANCE
+    }
+
+    class DeviceState {
+        -String id
+        -String deviceId
+        -Date created
+        -Date updated
+        -List<SignalState> signalStates
+        -boolean connected
+        -String connectionStatus
+        -HealthStatus healthStatus
+    }
+
+    class SignalState {
+        -String signalId
+        -Reading lastReading
+    }
+
+    class SignalConfiguration {
+        -String signalId
+        -List<Property> signalProperties
+    }
+
+    class Property {
+        -String id
+        -String name
+        -String value
+    }
+
+    class DriverDefinition {
+        -String id
+        -String name
+        -String description
+        -String version
+        -List<PropertyDefinition> configurationProperties
+        -List<PropertyDefinition> signalProperties
+        -List<String> tags
+    }
+
+    class PropertyDefinition {
+        -String name
+        -String description
+        -boolean required
+        -String defaultValue
+        -DataType valueType
+        -Map<String, String> allowedValues
+        -List<ValidateCondition> validateConditions
+    }
+
+    Engines o-- Engine : manages
+    Engine --> Driver : uses
+    Engine --> Datasource : has 1
+    Engine *-- "many" Device : manages
+    DriverRegistry --> Driver : creates
+    DriverRegistry *-- DriverDefinition : contains
+    Device --> DeviceDefinition : references
+    Device --> Datasource : connects to
+    Device *-- SignalConfiguration : configures
+    SignalConfiguration *-- Property : has
+    Datasource *-- Property : has
+    DeviceState *-- SignalState : contains
+    SignalState --> Reading : has
+    Engine --> Reading : generates
+    
+    Engine --> DeviceCommand : processes
+    Driver --> DeviceCommand : executes
+    Engines --> DeviceCommand : routes
+    DeviceCommand --> Device : targets
+    DeviceCommand --> Datasource : references
+    DeviceCommand *-- DeviceCommand.Write : contains
+    DeviceCommand *-- DeviceCommand.Read : contains
+    DeviceCommand --> CommandType : uses
+    DeviceCommand --> CommandStatus : has
+    Reading --> AlarmSeverity : references
+    DeviceState --> HealthStatus : has
+    
+    DeviceDefinition *-- SignalDefinition : contains
+    SignalDefinition *-- AlarmCondition : has
+    SignalDefinition *-- ValidateCondition : has
+    SignalDefinition --> DataType : has
+    AlarmCondition --> AlarmSeverity : has
+    AlarmCondition --> Expression : has
+    ValidateCondition --> Expression : has
+    DriverDefinition *-- PropertyDefinition : contains
+    PropertyDefinition --> DataType : has
