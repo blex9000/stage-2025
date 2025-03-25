@@ -72,12 +72,7 @@ public class EngineController {
         List<Reading> readings = enginesManager.pollDevices(deviceIds);
         return ResponseEntity.ok(readings);
     }
-    
-    @PostMapping("/poll/tags")
-    public ResponseEntity<List<Reading>> pollBySignalTags(@RequestBody List<String> signalTags) {
-        List<Reading> readings = enginesManager.pollBySignalTags(signalTags);
-        return ResponseEntity.ok(readings);
-    }
+  
     
     @PostMapping("/write")
     public ResponseEntity<Boolean> writeCommand(@RequestBody DeviceCommand command) {

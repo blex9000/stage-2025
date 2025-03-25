@@ -296,35 +296,6 @@ public class Engines {
         return allReadings;
     }
     
-    /**
-     * Poll engines for devices with specific signal tags
-     */
-    public List<Reading> pollBySignalTags(List<String> signalTags) {
-        if (signalTags == null || signalTags.isEmpty()) {
-            logger.warn("No signal tags provided for polling");
-            return Collections.emptyList();
-        }
-        
-        logger.debug("Polling for signal tags: {}", signalTags);
-        
-        // Find all device definitions with matching signal tags
-        List<DeviceDefinition> matchingDefinitions = deviceService.getAllDeviceDefinitions().stream()
-            .filter(def -> def.getSignals() != null && 
-                    def.getSignals().stream()
-                        .anyMatch(signal -> signal.getTags() != null && 
-                                 !Collections.disjoint(signal.getTags(), signalTags)))
-            .collect(Collectors.toList());
-        
-        // Get devices using these definitions
-        Set<String> deviceIds = new HashSet<>();
-        for (DeviceDefinition def : matchingDefinitions) {
-            deviceService.getDevicesByDeviceDefinitionId(def.getId())
-                .forEach(device -> deviceIds.add(device.getId()));
-        }
-        
-        // Poll these devices
-        return pollDevices(new ArrayList<>(deviceIds));
-    }
     
     /**
      * Write a command to a device
