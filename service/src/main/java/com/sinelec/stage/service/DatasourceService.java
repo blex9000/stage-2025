@@ -138,17 +138,17 @@ public class DatasourceService {
         
         // Only proceed with property validation if configuration exists
         if (datasource.getConfiguration() != null && !datasource.getConfiguration().isEmpty() &&
-            driver.getConfigurationProperties() != null && !driver.getConfigurationProperties().isEmpty()) {
+            driver.getConnectionProperties() != null && !driver.getConnectionProperties().isEmpty()) {
             
             // Create maps for easier lookup
             Map<String, Property> configProps = datasource.getConfiguration().stream()
                 .collect(Collectors.toMap(Property::getName, p -> p, (p1, p2) -> p1));
                 
-            Map<String, PropertyDefinition> driverPropDefs = driver.getConfigurationProperties().stream()
+            Map<String, PropertyDefinition> driverPropDefs = driver.getConnectionProperties().stream()
                 .collect(Collectors.toMap(PropertyDefinition::getName, p -> p, (p1, p2) -> p1));
             
             // Check that all required properties are provided
-            for (PropertyDefinition propDef : driver.getConfigurationProperties()) {
+            for (PropertyDefinition propDef : driver.getConnectionProperties()) {
                 if (propDef.isRequired() && !configProps.containsKey(propDef.getName())) {
                     result.addError(ValidationError.required(
                         propDef.getName(),

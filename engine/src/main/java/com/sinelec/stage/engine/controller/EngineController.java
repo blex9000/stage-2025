@@ -74,9 +74,9 @@ public class EngineController {
     }
   
     
-    @PostMapping("/write")
-    public ResponseEntity<Boolean> writeCommand(@RequestBody DeviceCommand command) {
-        boolean success = enginesManager.writeCommand(command);
+    @PostMapping("/cmd/execute")
+    public ResponseEntity<Boolean> executeCommand(@RequestBody DeviceCommand command) {
+        boolean success = enginesManager.executeCommand(command);
         return ResponseEntity.ok(success);
     }
 } 

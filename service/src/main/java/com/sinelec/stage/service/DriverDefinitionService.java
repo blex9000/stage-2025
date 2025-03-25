@@ -41,7 +41,7 @@ public class DriverDefinitionService {
                 driverDefinition.setDescription(driverDefinitionDetails.getDescription());
                 driverDefinition.setVersion(driverDefinitionDetails.getVersion());
                 driverDefinition.setTags(driverDefinitionDetails.getTags());
-                driverDefinition.setConfigurationProperties(driverDefinitionDetails.getConfigurationProperties());
+                driverDefinition.setConnectionProperties(driverDefinitionDetails.getConnectionProperties());
                 driverDefinition.setUpdatedAt(new Date());
                 return driverDefinitionRepository.save(driverDefinition);
             });

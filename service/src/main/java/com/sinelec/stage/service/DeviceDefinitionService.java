@@ -25,6 +25,11 @@ public class DeviceDefinitionService {
     public Optional<DeviceDefinition> getDeviceDefinitionById(String id) {
         return deviceDefinitionRepository.findById(id);
     }
+
+    public List<DeviceDefinition> getDeviceDefinitionByIdIn(List<String> ids) {
+        return deviceDefinitionRepository.findByIdIn(ids);
+    }
+
     
     public List<DeviceDefinition> getDeviceDefinitionsByName(String name) {
         return deviceDefinitionRepository.findByName(name);

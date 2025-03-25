@@ -27,7 +27,7 @@ classDiagram
         +boolean restartEngine(String)
         +Map<String, Object> getEngineStatistics(String)
         +List<Reading> pollDevices(List<String>)
-        +boolean writeCommand(DeviceCommand)
+        +boolean executeCommand(DeviceCommand)
         +void loadAndStartEngines()
         +void shutdownAllEngines()
     }
@@ -45,8 +45,7 @@ classDiagram
         +boolean connect()
         +void disconnect()
         +boolean isConnected()
-        +List<Reading> read(List<DeviceCommand>)
-        +void write(List<DeviceCommand>)
+        +void execute(List<DeviceCommand>)
         +Map<String, Object> getStats()
     }
 

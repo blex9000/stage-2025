@@ -19,6 +19,7 @@ public class PropertyDefinition {
     private String description;
     private boolean required;
     private String defaultValue;
+    private CollectionType collectionType;
     private DataType valueType;
     @Builder.Default
     private Map<String, String> allowedValues = new HashMap<>();

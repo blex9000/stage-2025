@@ -27,24 +27,23 @@ public class Engines {
     private final DriverRegistry driverRegistry;
     private final DatasourceService datasourceService;
     private final DeviceService deviceService;
+    private final DeviceDefinitionService deviceDefinitionService;
     private final DeviceStateService deviceStateService;
     private final ReadingService readingService;
-    private final DriverDefinitionService driverDefinitionService;
     
     @Autowired
     public Engines(
             DriverRegistry driverRegistry,
             DatasourceService datasourceService,
             DeviceService deviceService,
-            DeviceStateService deviceStateService,
-            ReadingService readingService,
-            DriverDefinitionService driverDefinitionService) {
+            DeviceDefinitionService deviceDefinitionService, DeviceStateService deviceStateService,
+            ReadingService readingService) {
         this.driverRegistry = driverRegistry;
         this.datasourceService = datasourceService;
         this.deviceService = deviceService;
+        this.deviceDefinitionService = deviceDefinitionService;
         this.deviceStateService = deviceStateService;
         this.readingService = readingService;
-        this.driverDefinitionService = driverDefinitionService;
     }
     
     @PostConstruct
@@ -96,8 +95,13 @@ public class Engines {
      * Create and start an engine for a datasource
      */
     public boolean createAndStartEngine(Datasource datasource) {
-        String datasourceId = datasource.getId();
-        
+        return createAndStartEngine(datasource.getId());
+    }
+    
+    /**
+     * Create and start an engine for a datasource ID
+     */
+    public boolean createAndStartEngine(String datasourceId) {
         if (engines.containsKey(datasourceId)) {
             logger.info("Engine for datasource {} already exists", datasourceId);
             return true;
@@ -106,37 +110,15 @@ public class Engines {
         logger.info("Creating engine for datasource {}", datasourceId);
         
         try {
-            // Check if driver is available
-            String driverId = datasource.getDriverId();
-            if (!driverRegistry.isDriverAvailable(driverId)) {
-                logger.error("Driver {} not available for datasource {}", 
-                        driverId, datasourceId);
-                return false;
-            }
-            
-            // Create driver instance
-            Driver driver = driverRegistry.createDriver(driverId);
-            
-            // Get devices for this datasource
-            List<Device> devices = deviceService.getDevicesByDatasourceId(datasourceId);
-            
-            logger.info("Found {} devices for datasource {}", devices.size(), datasourceId);
-            
-            if (devices.isEmpty()) {
-                logger.warn("No devices found for datasource {}, skipping engine creation", 
-                        datasourceId);
-                return false;
-            }
-            
             // Create engine instance
             Engine engine = new Engine(
-                    datasource,
-                    devices,
-                    driver,
+                    datasourceId,
+                    driverRegistry,
+                    datasourceService,
                     deviceService,
+                    deviceDefinitionService,
                     deviceStateService,
-                    readingService,
-                    driverDefinitionService);
+                    readingService);
             
             // Start the engine
             boolean started = engine.start();
@@ -298,11 +280,11 @@ public class Engines {
     
     
     /**
-     * Write a command to a device
+     * Execute a command to a device
      */
-    public boolean writeCommand(DeviceCommand command) {
+    public boolean executeCommand(DeviceCommand command) {
         if (command == null || command.getDeviceId() == null || command.getDatasourceId() == null) {
-            logger.warn("Invalid command provided for writing");
+            logger.warn("Invalid command provided");
             return false;
         }
         
@@ -319,7 +301,7 @@ public class Engines {
             return false;
         }
         
-        return engine.write(command);
+        return engine.executeCommand(command);
     }
     
     /**

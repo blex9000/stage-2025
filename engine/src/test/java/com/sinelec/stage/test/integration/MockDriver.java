@@ -64,7 +64,7 @@ public class MockDriver implements Driver {
     }
     
     @Override
-    public List<Reading> read(List<DeviceCommand> commands) {
+    public List<Reading> execute(List<DeviceCommand> commands) {
         if (!connected) {
             logger.warn("MockDriver not connected, cannot read");
             return Collections.emptyList();
@@ -140,6 +140,7 @@ public class MockDriver implements Driver {
     private Reading createMockReading(String deviceId, SignalDefinition signalDef) {
         Reading reading = new Reading();
         reading.setId(UUID.randomUUID().toString());
+        reading.setDatasourceId(datasource.getId());
         reading.setDeviceId(deviceId);
         reading.setSignalId(signalDef.getId());
         reading.setTimestamp(new Date());
@@ -173,6 +174,7 @@ public class MockDriver implements Driver {
     private Reading createMockReadingFromConfig(String deviceId, SignalConfiguration signalConfig) {
         Reading reading = new Reading();
         reading.setId(UUID.randomUUID().toString());
+        reading.setDatasourceId(datasource.getId());
         reading.setDeviceId(deviceId);
         reading.setSignalId(signalConfig.getSignalId());
         reading.setTimestamp(new Date());
@@ -202,6 +204,7 @@ public class MockDriver implements Driver {
     private Reading createMockReadingFromId(String deviceId, String signalId) {
         Reading reading = new Reading();
         reading.setId(UUID.randomUUID().toString());
+        reading.setDatasourceId(datasource.getId());
         reading.setDeviceId(deviceId);
         reading.setSignalId(signalId);
         reading.setTimestamp(new Date());
@@ -223,38 +226,5 @@ public class MockDriver implements Driver {
         reading.setMetaId(deviceId + ":" + signalId);
         
         return reading;
-    }
-    
-    /**
-     * Get the last value written to a signal
-     */
-    public Object getLastWrittenValue(String signalId) {
-        return lastWrittenValues.get(signalId);
-    }
-    
-    /**
-     * Find signal definition for a given signalId in the command
-     */
-    private SignalDefinition findSignalDefinition(DeviceCommand command, String signalId) {
-        if (command.getSignalDefinitions() != null) {
-            return command.getSignalDefinitions().stream()
-                    .filter(def -> signalId.equals(def.getId()))
-                    .findFirst()
-                    .orElse(null);
-        }
-        return null;
-    }
-    
-    /**
-     * Find signal configuration for a given signalId in the command
-     */
-    private SignalConfiguration findSignalConfiguration(DeviceCommand command, String signalId) {
-        if (command.getSignalConfigurations() != null) {
-            return command.getSignalConfigurations().stream()
-                    .filter(config -> signalId.equals(config.getSignalId()))
-                    .findFirst()
-                    .orElse(null);
-        }
-        return null;
     }
 } 

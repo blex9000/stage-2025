@@ -79,7 +79,7 @@ public class TestDataUtil {
                     .defaultValue("1000")
                     .build());
                 
-                driver.setConfigurationProperties(properties);
+                driver.setConnectionProperties(properties);
                 driver.setCreatedAt(new Date());
                 driver.setUpdatedAt(new Date());
                 

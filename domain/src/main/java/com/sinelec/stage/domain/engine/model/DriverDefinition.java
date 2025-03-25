@@ -25,7 +25,7 @@ public class DriverDefinition {
     private String version;
 
     @Builder.Default
-    private List<PropertyDefinition> configurationProperties = new ArrayList<>();
+    private List<PropertyDefinition> connectionProperties = new ArrayList<>();
     
     @Builder.Default
     private List<PropertyDefinition> signalProperties = new ArrayList<>();

@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.HashMap;
 
 /**
  * Single engine instance responsible for a datasource and its devices
@@ -19,14 +18,18 @@ import java.util.HashMap;
 public class Engine {
     private static final Logger logger = LoggerFactory.getLogger(Engine.class);
     
-    private final Datasource datasource;
-    private final List<Device> devices;
-    private final Driver driver;
+    private final String datasourceId;
+    private Datasource datasource;
+    private List<Device> devices;
+    private List<DeviceDefinition> deviceDefinitions;
+    private Driver driver;
     
+    private final DriverRegistry driverRegistry;
+    private final DatasourceService datasourceService;
     private final DeviceService deviceService;
+    private final DeviceDefinitionService deviceDefinitionService;
     private final DeviceStateService deviceStateService;
     private final ReadingService readingService;
-    private final DriverDefinitionService driverDefinitionService;
     
     // Engine state
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -37,21 +40,32 @@ public class Engine {
     private final AtomicInteger errorCount = new AtomicInteger(0);
     private final AtomicInteger readingCount = new AtomicInteger(0);
     
+    /**
+     * Create a new engine instance
+     */
     public Engine(
-            Datasource datasource,
-            List<Device> devices,
-            Driver driver,
+            String datasourceId,
+            DriverRegistry driverRegistry,
+            DatasourceService datasourceService,
             DeviceService deviceService,
+            DeviceDefinitionService deviceDefinitionService,
             DeviceStateService deviceStateService,
-            ReadingService readingService,
-            DriverDefinitionService driverDefinitionService) {
-        this.datasource = datasource;
-        this.devices = new ArrayList<>(devices);
-        this.driver = driver;
+            ReadingService readingService) {
+        
+        this.datasourceId = datasourceId;
+        this.driverRegistry = driverRegistry;
+        this.datasourceService = datasourceService;
         this.deviceService = deviceService;
+        this.deviceDefinitionService = deviceDefinitionService;
         this.deviceStateService = deviceStateService;
         this.readingService = readingService;
-        this.driverDefinitionService = driverDefinitionService;
+    }
+    
+    /**
+     * Get the datasource ID
+     */
+    public String getDatasourceId() {
+        return datasourceId;
     }
     
     /**
@@ -59,13 +73,16 @@ public class Engine {
      */
     public boolean start() {
         if (running.getAndSet(true)) {
-            logger.info("Engine for datasource {} is already running", datasource.getId());
+            logger.info("Engine for datasource {} is already running", datasourceId);
             return true;
         }
         
-        logger.info("Starting engine for datasource {}", datasource.getId());
+        logger.info("Starting engine for datasource {}", datasourceId);
         
         try {
+            // Load all required data
+            loadData();
+            
             // Initialize the driver with datasource configuration
             driver.initialize(datasource);
             
@@ -73,18 +90,55 @@ public class Engine {
             connected.set(driver.connect());
             
             if (!connected.get()) {
-                logger.error("Failed to connect to datasource {}", datasource.getId());
+                logger.error("Failed to connect to datasource {}", datasourceId);
                 running.set(false);
                 return false;
             }
             
-            logger.info("Engine for datasource {} started successfully", datasource.getId());
+            logger.info("Engine for datasource {} started successfully", datasourceId);
             return true;
         } catch (Exception e) {
             logger.error("Error starting engine for datasource {}: {}", 
-                    datasource.getId(), e.getMessage(), e);
+                    datasourceId, e.getMessage(), e);
             running.set(false);
             return false;
+        }
+    }
+    
+    /**
+     * Load all data required for the engine
+     */
+    private void loadData() {
+        // Load datasource
+        this.datasource = datasourceService.getDatasourceById(datasourceId)
+                .orElseThrow(() -> new IllegalArgumentException("Datasource not found: " + datasourceId));
+        
+        // Load devices
+        this.devices = new ArrayList<>(deviceService.getDevicesByDatasourceId(datasourceId));
+        
+        if (devices.isEmpty()) {
+            logger.warn("No devices found for datasource {}", datasourceId);
+        }
+        
+        // Load device definitions
+        List<String> deviceDefinitionIds = this.devices.stream()
+                .map(Device::getDeviceDefinitionId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        this.deviceDefinitions = new ArrayList<>(
+                deviceDefinitionService.getDeviceDefinitionByIdIn(deviceDefinitionIds));
+        
+        logger.info("Loaded {} devices and {} device definitions for datasource {}", 
+                devices.size(), deviceDefinitions.size(), datasourceId);
+        
+        // Create driver
+        String driverId = this.datasource.getDriverId();
+        this.driver = driverRegistry.createDriver(driverId);
+        
+        if (driver == null) {
+            throw new IllegalStateException("Failed to create driver: " + driverId);
         }
     }
     
@@ -93,19 +147,19 @@ public class Engine {
      */
     public void stop() {
         if (!running.getAndSet(false)) {
-            logger.info("Engine for datasource {} is already stopped", datasource.getId());
+            logger.info("Engine for datasource {} is already stopped", datasourceId);
             return;
         }
         
-        logger.info("Stopping engine for datasource {}", datasource.getId());
+        logger.info("Stopping engine for datasource {}", datasourceId);
         
         try {
             driver.disconnect();
             connected.set(false);
-            logger.info("Engine for datasource {} stopped successfully", datasource.getId());
+            logger.info("Engine for datasource {} stopped successfully", datasourceId);
         } catch (Exception e) {
             logger.error("Error stopping engine for datasource {}: {}", 
-                    datasource.getId(), e.getMessage(), e);
+                    datasourceId, e.getMessage(), e);
         }
     }
     
@@ -115,21 +169,21 @@ public class Engine {
     public List<Reading> poll() {
         if (!running.get() || !connected.get()) {
             logger.warn("Cannot poll - engine for datasource {} is not running/connected", 
-                    datasource.getId());
+                    datasourceId);
             return Collections.emptyList();
         }
         
         lastPollTime.set(System.currentTimeMillis());
         pollCount.incrementAndGet();
         
-        logger.debug("Polling devices for datasource {}", datasource.getId());
+        logger.debug("Polling devices for datasource {}", datasourceId);
         
         try {
             // Create read commands for all devices
             List<DeviceCommand> readCommands = createReadCommands();
             
             // Execute the read
-            List<Reading> readings = driver.read(readCommands);
+            List<Reading> readings = driver.execute(readCommands);
             
             if (readings != null && !readings.isEmpty()) {
                 // Process and save readings
@@ -140,18 +194,18 @@ public class Engine {
                 readingCount.addAndGet(processedReadings.size());
                 
                 logger.debug("Poll completed for datasource {} - {} readings collected", 
-                        datasource.getId(), processedReadings.size());
+                        datasourceId, processedReadings.size());
                 
                 return processedReadings;
             } else {
                 logger.debug("Poll completed for datasource {} - no readings returned", 
-                        datasource.getId());
+                        datasourceId);
                 return Collections.emptyList();
             }
         } catch (Exception e) {
             errorCount.incrementAndGet();
             logger.error("Error polling devices for datasource {}: {}", 
-                    datasource.getId(), e.getMessage(), e);
+                    datasourceId, e.getMessage(), e);
             return Collections.emptyList();
         }
     }
@@ -159,10 +213,10 @@ public class Engine {
     /**
      * Write values to devices
      */
-    public boolean write(DeviceCommand command) {
+    public boolean executeCommand(DeviceCommand command) {
         if (!running.get() || !connected.get()) {
-            logger.warn("Cannot write - engine for datasource {} is not running/connected", 
-                    datasource.getId());
+            logger.warn("Cannot exec command - engine for datasource {} is not running/connected",
+                    datasourceId);
             return false;
         }
         
@@ -171,13 +225,13 @@ public class Engine {
             enrichCommandWithSignalInfo(command);
             
             // Execute the write
-            driver.write(List.of(command));
+            driver.execute(List.of(command));
             
-            logger.debug("Write command {} executed successfully for device {}", 
+            logger.debug("Command {} executed successfully for device {}",
                     command.getId(), command.getDeviceId());
             return true;
         } catch (Exception e) {
-            logger.error("Error writing to device {}: {}", 
+            logger.error("Error executing command on device {}: {}",
                     command.getDeviceId(), e.getMessage(), e);
             return false;
         }
@@ -202,7 +256,7 @@ public class Engine {
      */
     public Map<String, Object> getStatistics() {
         Map<String, Object> stats = new HashMap<>();
-        stats.put("datasourceId", datasource.getId());
+        stats.put("datasourceId", datasourceId);
         stats.put("datasourceName", datasource.getName());
         stats.put("deviceCount", devices.size());
         stats.put("running", running.get());
@@ -225,22 +279,6 @@ public class Engine {
     }
     
     /**
-     * Get the datasource ID
-     */
-    public String getDatasourceId() {
-        return datasource.getId();
-    }
-    
-    /**
-     * Get the list of device IDs
-     */
-    public List<String> getDeviceIds() {
-        return devices.stream()
-                .map(Device::getId)
-                .collect(Collectors.toList());
-    }
-    
-    /**
      * Create read commands for all devices
      */
     private List<DeviceCommand> createReadCommands() {
@@ -256,7 +294,6 @@ public class Engine {
             
             // Enrich with signal info
             enrichCommandWithSignalInfo(command);
-            
             commands.add(command);
         }
         
@@ -280,17 +317,21 @@ public class Engine {
         List<SignalDefinition> signalDefinitions = new ArrayList<>();
         
         if (device.getDeviceDefinitionId() != null) {
-            deviceService.getDeviceDefinitionById(device.getDeviceDefinitionId())
-                .ifPresent(deviceDef -> {
-                    if (deviceDef.getSignals() != null) {
-                        for (SignalConfiguration config : device.getSignalConfigurations()) {
-                            deviceDef.getSignals().stream()
-                                .filter(s -> s.getId().equals(config.getSignalId()))
-                                .findFirst()
-                                .ifPresent(signalDefinitions::add);
-                        }
-                    }
-                });
+            String defId = device.getDeviceDefinitionId();
+            // Find device definition from the list
+            DeviceDefinition deviceDef = deviceDefinitions.stream()
+                    .filter(def -> def.getId().equals(defId))
+                    .findFirst()
+                    .orElse(null);
+                    
+            if (deviceDef != null && deviceDef.getSignals() != null) {
+                for (SignalConfiguration config : device.getSignalConfigurations()) {
+                    deviceDef.getSignals().stream()
+                        .filter(s -> s.getId().equals(config.getSignalId()))
+                        .findFirst()
+                        .ifPresent(signalDefinitions::add);
+                }
+            }
         }
         
         command.setSignalDefinitions(signalDefinitions);
@@ -311,9 +352,15 @@ public class Engine {
             // Find signal definition from device definition
             Optional<SignalDefinition> signalDef = Optional.empty();
             if (device.getDeviceDefinitionId() != null) {
-                Optional<DeviceDefinition> deviceDef = deviceService.getDeviceDefinitionById(device.getDeviceDefinitionId());
-                if (deviceDef.isPresent() && deviceDef.get().getSignals() != null) {
-                    signalDef = deviceDef.get().getSignals().stream()
+                // Find device definition from the list
+                String defId = device.getDeviceDefinitionId();
+                DeviceDefinition deviceDef = deviceDefinitions.stream()
+                        .filter(def -> def.getId().equals(defId))
+                        .findFirst()
+                        .orElse(null);
+                        
+                if (deviceDef != null && deviceDef.getSignals() != null) {
+                    signalDef = deviceDef.getSignals().stream()
                         .filter(s -> s.getId().equals(reading.getSignalId()))
                         .findFirst();
                 }

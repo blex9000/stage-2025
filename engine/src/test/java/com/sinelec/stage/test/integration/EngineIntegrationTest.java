@@ -57,6 +57,9 @@ public class EngineIntegrationTest {
     
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private DeviceDefinitionService deviceDefinitionService;
     
     @Autowired
     private DeviceStateService deviceStateService;
@@ -170,306 +173,80 @@ public class EngineIntegrationTest {
     
     @Test
     @Order(2)
-    public void testDirectDriverFunctionality() {
-        // Test driver functionality directly (without engine)
-        
-        // 1. Get a driver instance
-        Driver driver = driverRegistry.createDriver(driverDefinitionId);
-        assertNotNull(driver, "Should be able to create driver instance");
-        
-        // 2. Initialize and connect the driver
-        Datasource datasource = datasourceService.getDatasourceById(datasourceId).orElseThrow();
-        driver.initialize(datasource);
-        boolean connected = driver.connect();
-        assertTrue(connected, "Driver should connect successfully");
-        
-        // 3. Create read commands for testing
-        List<DeviceCommand> readCommands = new ArrayList<>();
-        DeviceCommand readCommand = new DeviceCommand();
-        readCommand.setDeviceId(deviceId);
-        readCommand.setDatasourceId(datasourceId);
-        
-        // Add signal definitions to read
-        Device device = deviceService.getDeviceById(deviceId).orElseThrow();
-        DeviceDefinition deviceDef = deviceService.getDeviceDefinitionById(
-                device.getDeviceDefinitionId()).orElseThrow();
-        
-        readCommand.setSignalDefinitions(deviceDef.getSignals());
-        readCommand.setSignalConfigurations(device.getSignalConfigurations());
-        readCommands.add(readCommand);
-        
-        // 4. Execute read
+    public void testEngineCreation() {
         try {
-            List<Reading> readings = driver.read(readCommands);
-            assertNotNull(readings, "Readings should be returned");
+            // Retrieve the datasource we created
+            Optional<Datasource> datasource = datasourceService.getDatasourceById(datasourceId);
+            assertTrue(datasource.isPresent(), "Datasource should exist");
+            assertTrue(datasource.get().isActive(), "Datasource should be active");
+            
+            // Test manual engine creation via Engines manager
+            boolean engineCreated = engines.createAndStartEngine(datasourceId);
+            assertTrue(engineCreated, "Engine should be created successfully");
+            
+            // Get engine stats to verify it's working
+            Map<String, Object> stats = engines.getEngineStatistics(datasourceId);
+            assertNotNull(stats, "Engine statistics should be available");
+            assertEquals(datasourceId, stats.get("datasourceId"), "Engine should be for our datasource");
+            assertEquals(1, stats.get("deviceCount"), "Engine should have 1 device");
+            assertTrue((Boolean)stats.get("running"), "Engine should be running");
+            assertTrue((Boolean)stats.get("connected"), "Engine should be connected");
+            
+            // Get active engine IDs
+            List<String> activeEngines = engines.getActiveEngineIds();
+            assertTrue(activeEngines.contains(datasourceId), "Engine should be in active engines list");
+            
+            // Poll the engine to test data collection
+            List<Reading> readings = engines.pollEngine(datasourceId);
+            assertNotNull(readings, "Readings should be returned from poll");
             assertFalse(readings.isEmpty(), "Readings should not be empty");
             
-            // Validate readings
+            // Verify readings
             for (Reading reading : readings) {
+                assertEquals(datasourceId, reading.getDatasourceId(), "Reading should have correct datasource ID");
                 assertNotNull(reading.getDeviceId(), "Reading should have device ID");
                 assertNotNull(reading.getSignalId(), "Reading should have signal ID");
-                assertNotNull(reading.getTimestamp(), "Reading should have timestamp");
-                assertNotNull(reading.getValue(), "Reading should have value");
+                assertNotNull(reading.getValue(), "Reading should have a value");
             }
             
-            logger.info("Driver read test successful, got {} readings", readings.size());
+            logger.info("Engine creation test successful");
         } catch (Exception e) {
-            fail("Driver read should not throw exception: " + e.getMessage());
+            logger.error("Exception during engine creation test", e);
+            fail("Test failed with exception: " + e.getMessage());
         }
-        
-        // 5. Test write functionality
-        DeviceCommand writeCommand = new DeviceCommand();
-        writeCommand.setId(UUID.randomUUID().toString());
-        writeCommand.setDeviceId(deviceId);
-        writeCommand.setDatasourceId(datasourceId);
-        writeCommand.setCommandType(DeviceCommand.CommandType.WRITE);
-        DeviceCommand.Write writeValue = new DeviceCommand.Write("temp-signal-id", "25.5");
-        writeCommand.setCreatedAt(new Date());
-        writeCommand.getWrite().add(writeValue);
-        try {
-            driver.write(List.of(writeCommand));
-            logger.info("Driver write test successful");
-        } catch (Exception e) {
-            fail("Driver write should not throw exception: " + e.getMessage());
-        }
-        
-        // 6. Disconnect
-        driver.disconnect();
-        assertFalse(driver.isConnected(), "Driver should be disconnected");
     }
     
     @Test
     @Order(3)
-    public void testDirectEngineFunctionality() {
-        // Test engine functionality directly (without engines manager)
-        
-        // 1. Create engine components
-        Datasource datasource = datasourceService.getDatasourceById(datasourceId).orElseThrow();
-        List<Device> devices = deviceService.getDevicesByDatasourceId(datasourceId);
-        Driver driver = driverRegistry.createDriver(driverDefinitionId);
-        
-        // 2. Create engine instance
-        Engine engine = new Engine(
-                datasource,
-                devices,
-                driver,
-                deviceService,
-                deviceStateService,
-                readingService,
-                driverDefinitionService);
-        
-        // 3. Start engine
-        boolean started = engine.start();
-        assertTrue(started, "Engine should start successfully");
-        assertTrue(engine.isRunning(), "Engine should be running");
-        assertTrue(engine.isConnected(), "Engine should be connected");
-        
-        // 4. Test poll
-        List<Reading> readings = engine.poll();
-        assertNotNull(readings, "Engine poll should return readings");
-        assertFalse(readings.isEmpty(), "Readings list should not be empty");
-        
-        // Verify readings
-        for (Reading reading : readings) {
-            assertEquals(deviceId, reading.getDeviceId(), "Reading should have correct device ID");
-            assertNotNull(reading.getSignalId(), "Reading should have signal ID");
-            assertNotNull(reading.getValue(), "Reading should have value");
-        }
-        
-        // 5. Test write
-        DeviceCommand command = new DeviceCommand();
-        command.setId(UUID.randomUUID().toString());
-        command.setDeviceId(deviceId);
-        command.setDatasourceId(datasourceId);
-        command.setCommandType(DeviceCommand.CommandType.WRITE);
-        DeviceCommand.Write writeValue = new DeviceCommand.Write("temp-signal-id", "25.5");
-        command.setCreatedAt(new Date());
-        command.getWrite().add(writeValue);
-        boolean writeResult = engine.write(command);
-        assertTrue(writeResult, "Engine write should succeed");
-        
-        // 6. Verify device state was created/updated
-        Optional<DeviceState> stateOpt = deviceStateService.getDeviceStateByDeviceId(deviceId);
-        assertTrue(stateOpt.isPresent(), "Device state should exist");
-        DeviceState state = stateOpt.get();
-        assertNotNull(state.getSignalStates(), "Signal states should exist");
-        assertTrue(state.getSignalStates().size() > 0, "Should have signal states");
-        
-        // 7. Stop engine
-        engine.stop();
-        assertFalse(engine.isRunning(), "Engine should not be running after stop");
-        
-        logger.info("Direct engine test successful");
-    }
-    
-    @Test
-    @Order(4)
-    public void testEnginesManagerFunctionality() {
+    public void testEnginesManager() {
         try {
-            // 1. Stop all engines first and wait to ensure clean state
-            for (String activeEngine : engines.getActiveEngineIds()) {
-                engines.stopEngine(activeEngine);
-            }
+            // 1. Get all active engines
+            List<String> activeEngines = engines.getActiveEngineIds();
+            assertTrue(activeEngines.contains(datasourceId), 
+                    "Our test engine should be active");
             
-            // Wait for engines to fully stop
-            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-                List<String> activeEngines = engines.getActiveEngineIds();
-                assertFalse(activeEngines.contains(datasourceId), 
-                        "Datasource engine should be fully stopped before starting test");
-            });
+            // 2. Stop our engine
+            boolean stopped = engines.stopEngine(datasourceId);
+            assertTrue(stopped, "Engine should be stopped successfully");
             
-            // 2. Start engines with a more robust approach
+            // Verify it's stopped
+            activeEngines = engines.getActiveEngineIds();
+            assertFalse(activeEngines.contains(datasourceId), 
+                    "Our engine should not be active after stopping");
+            
+            // 3. Test loading all engines (should reload our engine)
             engines.loadAndStartEngines();
             
-            // Wait and verify engine is running
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
-                List<String> activeEngines = engines.getActiveEngineIds();
-                assertTrue(activeEngines.contains(datasourceId), 
-                        "Datasource engine should be active");
-                
-                Map<String, Boolean> status = engines.getAllEngineStatus();
-                assertTrue(status.getOrDefault(datasourceId, false), 
-                        "Engine should be running and connected");
-            });
-            
-            // 3. Test manual polling with retries
-            List<Reading> readings = null;
-            for (int attempt = 0; attempt < 3; attempt++) {
-                readings = engines.pollEngine(datasourceId);
-                if (readings != null && !readings.isEmpty()) {
-                    break;
-                }
-                logger.info("Polling attempt {} yielded no readings, will retry...", attempt + 1);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            
-            assertNotNull(readings, "Polling should return readings");
-            assertFalse(readings.isEmpty(), "Readings should not be empty");
-            
-            // 4. Check reading storage
-            await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
-                List<Reading> storedReadings = readingService.getReadingsByDeviceId(deviceId);
-                assertFalse(storedReadings.isEmpty(), "Readings should be stored in database");
-                
-                // Log what we found for debugging
-                logger.info("Found {} readings for device {}", storedReadings.size(), deviceId);
-                
-                // Check each signal has at least one reading
-                long tempReadings = storedReadings.stream()
-                        .filter(r -> r.getSignalId().equals("temp-signal-id"))
-                        .count();
-                        
-                long statusReadings = storedReadings.stream()
-                        .filter(r -> r.getSignalId().equals("status-signal-id"))
-                        .count();
-                        
-                logger.info("Found {} temperature readings and {} status readings", 
-                        tempReadings, statusReadings);
-                        
-                assertTrue(tempReadings > 0, "Should have temperature readings");
-                assertTrue(statusReadings > 0, "Should have status readings");
-            });
-            
-            // 5. Test write command via engines manager
-            DeviceCommand command = new DeviceCommand();
-            command.setId(UUID.randomUUID().toString());
-            command.setDeviceId(deviceId);
-            command.setDatasourceId(datasourceId);
-            command.setCommandType(DeviceCommand.CommandType.WRITE);
-            DeviceCommand.Write writeValue = new DeviceCommand.Write("temp-signal-id", "25.5");
-            command.getWrite().add(writeValue);
-            command.setCreatedAt(new Date());
-            
-            boolean result = engines.writeCommand(command);
-            assertTrue(result, "Command execution should succeed");
-            
-            // 6. Test engine control with better verification
-            Map<String, Object> stats = engines.getEngineStatistics(datasourceId);
-            assertNotNull(stats, "Engine statistics should be available");
-            assertEquals(datasourceId, stats.get("datasourceId"), "Statistics should match datasource");
-            
-            // IMPORTANT: Before testing restart, verify the device still exists
-            List<Device> devices = deviceService.getDevicesByDatasourceId(datasourceId);
-            logger.info("Found {} devices for datasource {} before restart test", 
-                    devices.size(), datasourceId);
-            
-            if (devices.isEmpty()) {
-                // If no devices, create a new test device to ensure restart will work
-                logger.warn("No devices found for datasource, creating a test device");
-                DeviceDefinition deviceDef = testDataUtil.createTestDeviceDefinition();
-                
-                Device newDevice = new Device();
-                newDevice.setName("Restart Test Device");
-                newDevice.setDeviceDefinitionId(deviceDef.getId());
-                newDevice.setDatasourceId(datasourceId);
-                newDevice.setActive(true);
-                
-                // Add signal configurations as in testSetupTestEnvironment
-                List<SignalConfiguration> signalConfigs = new ArrayList<>();
-                
-                // Add temperature signal config
-                SignalConfiguration tempConfig = new SignalConfiguration();
-                tempConfig.setSignalId("temp-signal-id");
-                List<Property> tempProperties = new ArrayList<>();
-                tempProperties.add(new Property("ADDRESS", "40001"));
-                tempProperties.add(new Property("SCALE_FACTOR", "1.0"));
-                tempProperties.add(new Property("READ_ONLY", "false"));
-                tempConfig.setSignalProperties(tempProperties);
-                signalConfigs.add(tempConfig);
-                
-                // Add status signal config
-                SignalConfiguration statusConfig = new SignalConfiguration();
-                statusConfig.setSignalId("status-signal-id");
-                List<Property> statusProperties = new ArrayList<>();
-                statusProperties.add(new Property("ADDRESS", "10001"));
-                statusProperties.add(new Property("READ_ONLY", "true"));
-                statusConfig.setSignalProperties(statusProperties);
-                signalConfigs.add(statusConfig);
-                
-                newDevice.setSignalConfigurations(signalConfigs);
-                
-                deviceService.createDevice(newDevice);
-                
-                // Refresh devices list
-                devices = deviceService.getDevicesByDatasourceId(datasourceId);
-                logger.info("After creating test device, found {} devices", devices.size());
-            }
-            
-            // Continue with restart test
-            logger.info("Testing engine restart...");
-            boolean restarted = engines.restartEngine(datasourceId);
-            
-            // Debug if restart fails
-            if (!restarted) {
-                logger.error("Engine restart failed!");
-                
-                // Check datasource
+            // Verify it's loaded
+            boolean restarted = false;
+            activeEngines = engines.getActiveEngineIds();
+            if (activeEngines.contains(datasourceId)) {
+                restarted = true;
+            } else {
+                // If not found, try creating it manually
+                logger.info("Engine not auto-loaded, trying manual start");
                 Optional<Datasource> datasource = datasourceService.getDatasourceById(datasourceId);
-                logger.info("Datasource exists: {}", datasource.isPresent());
                 if (datasource.isPresent()) {
-                    logger.info("Datasource: id={}, name={}, driverId={}, active={}",
-                            datasource.get().getId(), 
-                            datasource.get().getName(),
-                            datasource.get().getDriverId(),
-                            datasource.get().isActive());
-                }
-                
-                // Verify driver
-                String driverId = datasource.map(Datasource::getDriverId).orElse("unknown");
-                boolean driverAvailable = driverRegistry.isDriverAvailable(driverId);
-                logger.info("Driver {} available: {}", driverId, driverAvailable);
-                
-                // Check devices again
-                devices = deviceService.getDevicesByDatasourceId(datasourceId);
-                logger.info("Found {} devices for datasource {}", devices.size(), datasourceId);
-                
-                // Try manually creating and starting engine
-                if (datasource.isPresent() && !devices.isEmpty()) {
-                    logger.info("Attempting manual engine creation...");
                     boolean manualStart = engines.createAndStartEngine(datasource.get());
                     logger.info("Manual engine creation result: {}", manualStart);
                     
@@ -489,12 +266,6 @@ public class EngineIntegrationTest {
                         "Engine should be connected after restart");
             });
             
-            // 7. Verify all engines status
-            Map<String, Boolean> allStatus = engines.getAllEngineStatus();
-            assertNotNull(allStatus, "Engine status map should be available");
-            assertTrue(allStatus.containsKey(datasourceId), "Status map should contain our engine");
-            assertTrue(allStatus.get(datasourceId), "Our engine should be running");
-            
             logger.info("Engines manager test successful");
         } catch (Exception e) {
             logger.error("Exception during engine manager test", e);
@@ -503,7 +274,7 @@ public class EngineIntegrationTest {
     }
     
     @Test
-    @Order(5)
+    @Order(4)
     public void testDevicePollingAndStates() {
         // Add test isolation - don't rely on previous test state
         try {

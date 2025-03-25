@@ -63,7 +63,7 @@ public class DriverRegistry {
                 updatedDef.setDescription(definition.getDescription());
                 updatedDef.setVersion(definition.getVersion());
                 updatedDef.setTags(definition.getTags());
-                updatedDef.setConfigurationProperties(definition.getConfigurationProperties());
+                updatedDef.setConnectionProperties(definition.getConnectionProperties());
                 driverDefinitionService.updateDriverDefinition(driverId, updatedDef);
                 logger.info("Updated driver definition for {}", driverId);
             } else {
